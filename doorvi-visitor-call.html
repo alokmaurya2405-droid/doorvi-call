@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoorVi - Calling...</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .house-number {
+            font-size: 48px;
+            font-weight: 900;
+            margin-top: 10px;
+        }
+
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        #remote-video {
+            width: 100%;
+            height: 100%;
+        }
+
+        #local-video {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 120px;
+            height: 160px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: #1a1a1a;
+        }
+
+        .status-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+        }
+
+        .status-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 50px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .status-text {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .status-subtext {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+
+        .controls {
+            padding: 30px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            font-size: 32px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+        }
+
+        .btn-hangup {
+            background: #FF3B30;
+            color: white;
+            transform: rotate(135deg);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(255, 59, 48, 0.2);
+            border: 1px solid #FF3B30;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px;
+            text-align: center;
+        }
+
+        .hidden { display: none; }
+
+        .permission-request {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 90%;
+            width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+        .permission-request h2 {
+            color: #007AFF;
+            margin-bottom: 15px;
+        }
+
+        .permission-request p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .permission-btn {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">🚪</div>
+            <div class="logo-text">DoorVi</div>
+        </div>
+        <div class="house-number" id="houseNumber">--</div>
+    </div>
+
+    <div class="video-container">
+        <div id="remote-video"></div>
+        <div id="local-video"></div>
+        <div class="status-overlay" id="statusOverlay">
+            <div class="status-icon" id="statusIcon">📞</div>
+            <div class="status-text" id="statusText">Initializing...</div>
+            <div class="status-subtext" id="statusSubtext">Please wait</div>
+            <div class="spinner" id="spinner"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-hangup" id="hangupBtn" onclick="leaveCall()">📞</button>
+    </div>
+
+    <div class="error-message hidden" id="errorMessage"></div>
+
+    <div class="permission-request hidden" id="permissionModal">
+        <h2>Camera & Microphone Access</h2>
+        <p>DoorVi needs access to your camera and microphone to connect you with the house owner.</p>
+        <button class="permission-btn" onclick="requestPermissions()">Allow Access</button>
+    </div>
+
+    <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
+        const CHANNEL_NAME = urlParams.get('channelName') || 'house_32_channel';
+        const TOKEN = urlParams.get('token') || null;
+
+        const houseMatch = CHANNEL_NAME.match(/house_(\w+)_channel/);
+        const houseNumber = houseMatch ? houseMatch[1] : '??';
+        document.getElementById('houseNumber').textContent = houseNumber;
+
+        let client, localAudioTrack, localVideoTrack, remoteUsers = {};
+
+        function updateStatus(icon, text, subtext, showSpinner = false) {
+            document.getElementById('statusIcon').textContent = icon;
+            document.getElementById('statusText').textContent = text;
+            document.getElementById('statusSubtext').textContent = subtext;
+            document.getElementById('spinner').classList.toggle('hidden', !showSpinner);
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+            updateStatus('⚠️', 'Connection Error', message, false);
+        }
+
+        async function requestPermissions() {
+            document.getElementById('permissionModal').classList.add('hidden');
+            updateStatus('🎥', 'Requesting Access...', 'Please allow camera and microphone', true);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream.getTracks().forEach(track => track.stop());
+                await initializeAgora();
+            } catch (error) {
+                showError('Camera/microphone access denied');
+                document.getElementById('permissionModal').classList.remove('hidden');
+            }
+        }
+
+        async function initializeAgora() {
+            try {
+                updateStatus('🔗', 'Connecting...', 'Setting up video call', true);
+                client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
+                client.on('user-published', async (user, mediaType) => {
+                    await client.subscribe(user, mediaType);
+                    if (mediaType === 'video') {
+                        const playerDiv = document.createElement('div');
+                        playerDiv.id = 'player-' + user.uid;
+                        playerDiv.style.width = '100%';
+                        playerDiv.style.height = '100%';
+                        document.getElementById('remote-video').innerHTML = '';
+                        document.getElementById('remote-video').appendChild(playerDiv);
+                        user.videoTrack.play(playerDiv);
+                        updateStatus('✅', 'Connected!', 'Owner is on the line', false);
+                        document.getElementById('statusOverlay').classList.add('hidden');
+                    }
+                    if (mediaType === 'audio') user.audioTrack.play();
+                });
+
+                client.on('user-left', () => {
+                    updateStatus('👋', 'Call Ended', 'Owner has left', false);
+                    document.getElementById('statusOverlay').classList.remove('hidden');
+                });
+
+                await joinCall();
+            } catch (error) {
+                console.error(error);
+                showError('Failed to initialize');
+            }
+        }
+
+        async function joinCall() {
+            try {
+                updateStatus('📞', 'Calling...', 'Connecting to house owner', true);
+                [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                localVideoTrack.play(document.getElementById('local-video'));
+                await client.join(APP_ID, CHANNEL_NAME, TOKEN, null);
+                await client.publish([localAudioTrack, localVideoTrack]);
+                updateStatus('⏳', 'Waiting...', 'Owner will join shortly', true);
+            } catch (error) {
+                console.error(error);
+                showError('Failed to join call');
+            }
+        }
+
+        async function leaveCall() {
+            if (localAudioTrack) localAudioTrack.close();
+            if (localVideoTrack) localVideoTrack.close();
+            if (client) await client.leave();
+            updateStatus('👋', 'Call Ended', 'Thank you for using DoorVi', false);
+            setTimeout(() => window.close(), 2000);
+        }
+
+        window.addEventListener('load', async () => {
+            try {
+                const permissions = await navigator.permissions.query({ name: 'camera' });
+                if (permissions.state === 'granted') {
+                    await initializeAgora();
+                } else {
+                    document.getElementById('permissionModal').classList.remove('hidden');
+                    document.getElementById('spinner').classList.add('hidden');
+                }
+            } catch {
+                document.getElementById('permissionModal').classList.remove('hidden');
+                document.getElementById('spinner').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
