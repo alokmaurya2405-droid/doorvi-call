@@ -28,7 +28,6 @@
             position: relative;
         }
 
-        /* Animated background blobs */
         .bg-blob {
             position: fixed;
             border-radius: 50%;
@@ -38,7 +37,7 @@
             z-index: 0;
             animation: blobFloat 8s ease-in-out infinite;
         }
-        .bg-blob-1 { width: 400px; height: 400px; background: #007AFF; top: -100px; left: -100px; animation-delay: 0s; }
+        .bg-blob-1 { width: 400px; height: 400px; background: #007AFF; top: -100px; left: -100px; }
         .bg-blob-2 { width: 300px; height: 300px; background: #5856D6; bottom: 0; right: -80px; animation-delay: 3s; }
         .bg-blob-3 { width: 200px; height: 200px; background: #34C759; top: 40%; left: 30%; animation-delay: 5s; }
 
@@ -47,10 +46,8 @@
             50% { transform: translate(20px, -20px) scale(1.05); }
         }
 
-        /* All content above blobs */
         .header, .video-container, .controls, .permission-request, .error-message { position: relative; z-index: 1; }
 
-        /* ── Header ─────────────────────────────────── */
         .header {
             padding: 18px 20px 14px;
             display: flex;
@@ -59,57 +56,34 @@
             background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
         }
 
-        .logo-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .logo-group { display: flex; align-items: center; gap: 10px; }
 
         .logo-icon {
-            width: 42px;
-            height: 42px;
+            width: 42px; height: 42px;
             background: linear-gradient(135deg, #007AFF, #5856D6);
             border-radius: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             font-size: 22px;
             box-shadow: 0 4px 20px rgba(0,122,255,0.4);
         }
 
         .logo-text {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: 1px;
+            font-size: 22px; font-weight: 800; letter-spacing: 1px;
             background: linear-gradient(90deg, #fff, rgba(255,255,255,0.7));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
 
         .house-badge {
-            background: var(--card);
-            border: 1px solid var(--border);
-            backdrop-filter: blur(12px);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            color: rgba(255,255,255,0.85);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            background: var(--card); border: 1px solid var(--border);
+            backdrop-filter: blur(12px); padding: 6px 14px; border-radius: 20px;
+            font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85);
+            display: flex; align-items: center; gap: 6px;
         }
 
         .house-badge::before {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background: var(--green);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px var(--green);
-            animation: livePulse 2s infinite;
+            content: ''; width: 7px; height: 7px; background: var(--green);
+            border-radius: 50%; display: inline-block;
+            box-shadow: 0 0 6px var(--green); animation: livePulse 2s infinite;
         }
 
         @keyframes livePulse {
@@ -117,100 +91,46 @@
             50% { opacity: 0.5; transform: scale(1.3); }
         }
 
-        /* ── Video Area ─────────────────────────────── */
-        .video-container {
-            flex: 1;
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-        }
+        .video-container { flex: 1; position: relative; width: 100%; overflow: hidden; }
 
-        #remote-video {
-            width: 100%;
-            height: 100%;
-            background: transparent;
-        }
+        #remote-video { width: 100%; height: 100%; background: transparent; }
 
         #local-video {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            width: 100px;
-            height: 140px;
-            border-radius: 18px;
+            position: absolute; top: 16px; right: 16px;
+            width: 100px; height: 140px; border-radius: 18px;
             border: 2px solid rgba(255,255,255,0.25);
-            background: rgba(0,0,0,0.5);
-            z-index: 30;
-            overflow: hidden;
+            background: rgba(0,0,0,0.5); z-index: 30; overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            transition: all 0.3s ease;
         }
 
-        #local-video:active { transform: scale(0.95); }
-
-        /* Local video label */
-        #local-video::after {
-            content: 'You';
-            position: absolute;
-            bottom: 6px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: 600;
-            background: rgba(0,0,0,0.6);
-            padding: 2px 8px;
-            border-radius: 10px;
-            pointer-events: none;
-        }
-
-        /* ── Status Overlay ─────────────────────────── */
         .status-overlay {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            position: absolute; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
             z-index: 10;
             background: radial-gradient(circle at center, rgba(0,0,0,0.3), transparent 70%);
             padding: 40px;
         }
 
-        .status-ring {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin-bottom: 28px;
-        }
+        .status-ring { position: relative; width: 120px; height: 120px; margin-bottom: 28px; }
 
         .status-ring-outer {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
+            position: absolute; inset: 0; border-radius: 50%;
             border: 2px solid rgba(0,122,255,0.3);
             animation: ringPulse 2.5s ease-in-out infinite;
         }
 
         .status-ring-mid {
-            position: absolute;
-            inset: 12px;
-            border-radius: 50%;
+            position: absolute; inset: 12px; border-radius: 50%;
             border: 2px solid rgba(0,122,255,0.2);
             animation: ringPulse 2.5s ease-in-out infinite 0.4s;
         }
 
         .status-ring-inner {
-            position: absolute;
-            inset: 24px;
-            border-radius: 50%;
+            position: absolute; inset: 24px; border-radius: 50%;
             background: linear-gradient(135deg, rgba(0,122,255,0.3), rgba(88,86,214,0.3));
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.15);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);
+            display: flex; align-items: center; justify-content: center; font-size: 36px;
         }
 
         @keyframes ringPulse {
@@ -218,34 +138,14 @@
             50% { transform: scale(1.15); opacity: 0.4; }
         }
 
-        .status-text {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            text-align: center;
-            text-shadow: 0 2px 20px rgba(0,0,0,0.8);
-        }
+        .status-text { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
+        .status-subtext { font-size: 15px; color: rgba(255,255,255,0.55); text-align: center; }
 
-        .status-subtext {
-            font-size: 15px;
-            color: rgba(255,255,255,0.55);
-            text-align: center;
-            font-weight: 400;
-        }
-
-        .spinner-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-        }
+        .spinner-row { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
 
         .dot {
-            width: 8px;
-            height: 8px;
-            background: var(--blue);
-            border-radius: 50%;
-            animation: dotBounce 1.2s infinite ease-in-out;
+            width: 8px; height: 8px; background: var(--blue);
+            border-radius: 50%; animation: dotBounce 1.2s infinite ease-in-out;
         }
         .dot:nth-child(2) { animation-delay: 0.2s; }
         .dot:nth-child(3) { animation-delay: 0.4s; }
@@ -255,80 +155,38 @@
             40% { transform: scale(1); opacity: 1; }
         }
 
-        /* ── Controls Bar ───────────────────────────── */
         .controls {
             padding: 20px 30px calc(20px + env(safe-area-inset-bottom));
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            background: rgba(10, 15, 30, 0.95);
-            border-top: 1px solid var(--border);
+            display: flex; justify-content: center; align-items: center; gap: 30px;
+            background: rgba(10,15,30,0.95); border-top: 1px solid var(--border);
             backdrop-filter: blur(20px);
         }
 
-        .ctrl-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
+        .ctrl-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; }
 
         .ctrl-btn-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
             box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
         .ctrl-btn-circle:active { transform: scale(0.88); }
-
-        .ctrl-label {
-            font-size: 11px;
-            font-weight: 500;
-            color: rgba(255,255,255,0.5);
-        }
+        .ctrl-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); }
 
         .btn-end .ctrl-btn-circle {
             background: linear-gradient(135deg, #FF3B30, #FF6B6B);
             transform: rotate(135deg);
             box-shadow: 0 8px 24px rgba(255,59,48,0.4);
         }
-
         .btn-end .ctrl-btn-circle:active { transform: rotate(135deg) scale(0.88); }
+        .btn-mute .ctrl-btn-circle, .btn-cam .ctrl-btn-circle { background: var(--card); border: 1px solid var(--border); }
 
-        .btn-mute .ctrl-btn-circle {
-            background: var(--card);
-            border: 1px solid var(--border);
-        }
-
-        .btn-cam .ctrl-btn-circle {
-            background: var(--card);
-            border: 1px solid var(--border);
-        }
-
-        /* ── Toast Error ────────────────────────────── */
         .error-message {
-            position: fixed;
-            bottom: 120px;
-            left: 16px;
-            right: 16px;
-            background: rgba(255, 59, 48, 0.92);
-            backdrop-filter: blur(12px);
-            border-radius: 16px;
-            padding: 14px 18px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 14px;
-            z-index: 200;
+            position: fixed; bottom: 120px; left: 16px; right: 16px;
+            background: rgba(255,59,48,0.92); backdrop-filter: blur(12px);
+            border-radius: 16px; padding: 14px 18px; text-align: center;
+            font-weight: 600; font-size: 14px; z-index: 200;
             animation: slideUp 0.4s ease-out;
             box-shadow: 0 8px 30px rgba(255,59,48,0.3);
         }
@@ -338,128 +196,69 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* ── Permission Screen ──────────────────────── */
         .permission-request {
-            position: fixed;
-            inset: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            z-index: 300;
-            background: var(--dark);
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 24px; z-index: 300; background: var(--dark);
         }
 
         .permission-card {
-            width: 100%;
-            max-width: 360px;
+            width: 100%; max-width: 360px;
             background: linear-gradient(145deg, #141a2e, #1a2340);
-            border: 1px solid var(--border);
-            border-radius: 28px;
-            padding: 36px 28px;
-            text-align: center;
+            border: 1px solid var(--border); border-radius: 28px;
+            padding: 36px 28px; text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
         .perm-icon-wrap {
-            width: 80px;
-            height: 80px;
+            width: 80px; height: 80px;
             background: linear-gradient(135deg, rgba(0,122,255,0.2), rgba(88,86,214,0.2));
-            border: 1px solid rgba(0,122,255,0.3);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 38px;
-            margin: 0 auto 22px;
+            border: 1px solid rgba(0,122,255,0.3); border-radius: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 38px; margin: 0 auto 22px;
         }
 
-        .permission-card h2 {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: white;
-        }
-
-        .permission-card p {
-            font-size: 15px;
-            color: rgba(255,255,255,0.55);
-            line-height: 1.6;
-            margin-bottom: 28px;
-        }
+        .permission-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; color: white; }
+        .permission-card p { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 28px; }
 
         .permission-btn {
             background: linear-gradient(135deg, #007AFF, #5856D6);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 8px 24px rgba(0,122,255,0.35);
-            letter-spacing: 0.3px;
-            transition: all 0.2s;
+            color: white; border: none; padding: 16px; border-radius: 16px;
+            font-size: 16px; font-weight: 700; cursor: pointer; width: 100%;
+            box-shadow: 0 8px 24px rgba(0,122,255,0.35); transition: all 0.2s;
         }
-
         .permission-btn:active { transform: scale(0.97); }
 
-        .perm-footer {
-            margin-top: 16px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.3);
-            line-height: 1.5;
-        }
+        .perm-footer { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.5; }
 
-        /* ── Connected Overlay (top bar when in call) ─ */
         .connected-bar {
-            position: absolute;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(52,199,89,0.2);
-            border: 1px solid rgba(52,199,89,0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 6px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #34C759;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            z-index: 20;
+            position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+            background: rgba(52,199,89,0.2); border: 1px solid rgba(52,199,89,0.4);
+            backdrop-filter: blur(10px); border-radius: 20px; padding: 6px 16px;
+            font-size: 13px; font-weight: 600; color: #34C759;
+            display: flex; align-items: center; gap: 6px; z-index: 20;
             animation: fadeIn 0.4s ease;
         }
 
         .connected-bar::before {
-            content: '';
-            width: 7px;
-            height: 7px;
-            background: #34C759;
-            border-radius: 50%;
-            animation: livePulse 1.5s infinite;
+            content: ''; width: 7px; height: 7px; background: #34C759;
+            border-radius: 50%; animation: livePulse 1.5s infinite;
         }
 
         .hidden { display: none !important; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-
-        /* Call timer */
-        #callTimer {
-            font-variant-numeric: tabular-nums;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
     </style>
 </head>
 <body>
-    <!-- Background Blobs -->
     <div class="bg-blob bg-blob-1"></div>
     <div class="bg-blob bg-blob-2"></div>
     <div class="bg-blob bg-blob-3"></div>
 
-    <!-- Header -->
     <div class="header">
         <div class="logo-group">
             <div class="logo-icon">🚪</div>
@@ -468,17 +267,12 @@
         <div class="house-badge">House <span id="houseNumber">--</span></div>
     </div>
 
-    <!-- Video -->
     <div class="video-container">
         <div id="remote-video"></div>
         <div id="local-video"></div>
-
-        <!-- Connected timer bar -->
         <div class="connected-bar hidden" id="connectedBar">
             Connected · <span id="callTimer">00:00</span>
         </div>
-
-        <!-- Status Overlay -->
         <div class="status-overlay" id="statusOverlay">
             <div class="status-ring">
                 <div class="status-ring-outer"></div>
@@ -488,35 +282,28 @@
             <div class="status-text" id="statusText">Initializing...</div>
             <div class="status-subtext" id="statusSubtext">Connecting to secure line</div>
             <div class="spinner-row" id="spinnerRow">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
         </div>
     </div>
 
-    <!-- Controls -->
     <div class="controls">
-        <button class="ctrl-btn btn-mute" id="muteBtn" onclick="toggleMute()">
+        <button class="ctrl-btn btn-mute" onclick="toggleMute()">
             <div class="ctrl-btn-circle" id="muteBtnCircle">🎤</div>
             <span class="ctrl-label" id="muteLabel">Mute</span>
         </button>
-
         <button class="ctrl-btn btn-end" onclick="leaveCall()">
             <div class="ctrl-btn-circle">📞</div>
-            <span class="ctrl-label" style="color: #FF3B30;">End</span>
+            <span class="ctrl-label" style="color:#FF3B30;">End</span>
         </button>
-
-        <button class="ctrl-btn btn-cam" id="camBtn" onclick="toggleCamera()">
+        <button class="ctrl-btn btn-cam" onclick="toggleCamera()">
             <div class="ctrl-btn-circle" id="camBtnCircle">📷</div>
             <span class="ctrl-label" id="camLabel">Camera</span>
         </button>
     </div>
 
-    <!-- Error Toast -->
     <div class="error-message hidden" id="errorMessage"></div>
 
-    <!-- Permission Modal -->
     <div class="permission-request" id="permissionModal" style="display:none;">
         <div class="permission-card">
             <div class="perm-icon-wrap">🎥</div>
@@ -529,7 +316,6 @@
 
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
     <script>
-        // ── Config ──────────────────────────────────────────────────────────
         const urlParams = new URLSearchParams(window.location.search);
         const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
         const CHANNEL_NAME = urlParams.get('channelName') || 'house_32_channel';
@@ -538,11 +324,13 @@
         const houseMatch = CHANNEL_NAME.match(/house_(\w+)_channel/);
         document.getElementById('houseNumber').textContent = houseMatch ? houseMatch[1] : '??';
 
-        // ── State ───────────────────────────────────────────────────────────
-        let client, localAudioTrack, localVideoTrack;
+        let client = null;
+        let localAudioTrack = null;
+        let localVideoTrack = null;
         let isMuted = false, isCamOff = false;
         let callStartTime = null, timerInterval = null;
-        let adminJoined = false; // KEY FIX: track if admin is present
+        let adminJoined = false;
+        let isLeaving = false; // prevent double-leave
 
         // ── UI Helpers ──────────────────────────────────────────────────────
         function updateStatus(icon, text, subtext, showSpinner = false) {
@@ -570,17 +358,44 @@
         }
 
         function stopCallTimer() {
-            clearInterval(timerInterval);
-            timerInterval = null;
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         }
 
-        // ── Agora Events ────────────────────────────────────────────────────
+        // ── FULL CLEANUP — stops camera/mic LED completely ──────────────────
+        async function fullCleanup() {
+            if (isLeaving) return;
+            isLeaving = true;
+
+            stopCallTimer();
+
+            // Stop and close audio track — releases mic
+            if (localAudioTrack) {
+                try { localAudioTrack.stop(); } catch(e) {}
+                try { localAudioTrack.close(); } catch(e) {}
+                localAudioTrack = null;
+            }
+
+            // Stop and close video track — releases camera LED
+            if (localVideoTrack) {
+                try { localVideoTrack.stop(); } catch(e) {}
+                try { localVideoTrack.close(); } catch(e) {}
+                localVideoTrack = null;
+            }
+
+            // Unpublish and leave channel
+            if (client) {
+                try { await client.unpublish(); } catch(e) {}
+                try { await client.leave(); } catch(e) {}
+                client = null;
+            }
+        }
+
+        // ── Agora ───────────────────────────────────────────────────────────
         async function initializeAgora() {
             try {
                 updateStatus('🔗', 'Connecting...', 'Setting up secure video line', true);
                 client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
-                // ── KEY FIX: Only end call if admin (uid !== 0) truly leaves ──
                 client.on('user-published', async (user, mediaType) => {
                     await client.subscribe(user, mediaType);
 
@@ -593,7 +408,6 @@
                         document.getElementById('remote-video').innerHTML = '';
                         document.getElementById('remote-video').appendChild(playerDiv);
                         user.videoTrack.play(playerDiv);
-
                         document.getElementById('statusOverlay').classList.add('hidden');
                         document.getElementById('connectedBar').classList.remove('hidden');
                         startCallTimer();
@@ -603,26 +417,30 @@
                 });
 
                 client.on('user-unpublished', (user, mediaType) => {
-                    // Don't end call just because media was unpublished (e.g. camera toggle)
                     if (mediaType === 'video') {
-                        document.getElementById('statusOverlay').classList.remove('hidden');
-                        updateStatus('📹', 'Video Paused', 'Owner paused their camera', false);
+                        const playerDiv = document.getElementById('player-' + user.uid);
+                        if (playerDiv) playerDiv.remove();
+                        if (adminJoined) {
+                            document.getElementById('statusOverlay').classList.remove('hidden');
+                            updateStatus('📹', 'Video Paused', 'Resident paused their camera', false);
+                        }
                     }
                 });
 
-                client.on('user-left', (user) => {
-                    // Only end if it was the admin who actually LEFT the channel
+                client.on('user-left', async (user) => {
+                    // Only trigger end when admin who actually joined has left
                     if (adminJoined) {
                         adminJoined = false;
                         stopCallTimer();
                         document.getElementById('connectedBar').classList.add('hidden');
                         document.getElementById('remote-video').innerHTML = '';
                         document.getElementById('statusOverlay').classList.remove('hidden');
-                        updateStatus('👋', 'Call Ended', 'The resident has ended the call', false);
                         document.getElementById('spinnerRow').classList.add('hidden');
+                        updateStatus('👋', 'Call Ended', 'The resident has ended the call', false);
 
-                        // Give user time to read message then close
-                        setTimeout(() => leaveCall(), 3000);
+                        // Fully clean up camera/mic then close page
+                        await fullCleanup();
+                        setTimeout(() => { window.location.href = 'about:blank'; }, 2500);
                     }
                 });
 
@@ -630,6 +448,7 @@
 
             } catch (err) {
                 console.error(err);
+                await fullCleanup();
                 showError('Failed to connect. Please refresh.', false);
                 updateStatus('⚠️', 'Connection Failed', 'Please refresh the page', false);
             }
@@ -637,7 +456,7 @@
 
         async function joinCall() {
             try {
-                updateStatus('📞', 'Calling...', 'Ringing the resident\'s device', true);
+                updateStatus('📞', 'Calling...', "Ringing the resident's device", true);
 
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
                     { encoderConfig: 'music_standard' },
@@ -645,72 +464,65 @@
                 );
 
                 localVideoTrack.play(document.getElementById('local-video'));
-
                 await client.join(APP_ID, CHANNEL_NAME, TOKEN, null);
                 await client.publish([localAudioTrack, localVideoTrack]);
-
                 updateStatus('⏳', 'Waiting for Answer', 'Resident has been notified', true);
 
             } catch (err) {
                 console.error(err);
+                await fullCleanup();
                 showError('Failed to start call. Check your camera/mic permissions.');
                 updateStatus('⚠️', 'Failed to Call', 'Please refresh and try again', false);
             }
         }
 
+        // ── Manual hang up ──────────────────────────────────────────────────
         async function leaveCall() {
-            try {
-                stopCallTimer();
-                if (localAudioTrack) { localAudioTrack.close(); localAudioTrack = null; }
-                if (localVideoTrack) { localVideoTrack.close(); localVideoTrack = null; }
-                if (client) { await client.leave(); }
-            } catch(e) { console.error(e); }
-
-            document.getElementById('statusOverlay').classList.remove('hidden');
-            document.getElementById('connectedBar').classList.add('hidden');
             updateStatus('👋', 'Call Ended', 'Thank you for using DoorVi', false);
             document.getElementById('spinnerRow').classList.add('hidden');
+            document.getElementById('connectedBar').classList.add('hidden');
+            document.getElementById('statusOverlay').classList.remove('hidden');
 
-            setTimeout(() => { window.location.href = 'about:blank'; }, 2500);
+            await fullCleanup();
+            setTimeout(() => { window.location.href = 'about:blank'; }, 2000);
         }
 
-        // ── Mute Toggle ─────────────────────────────────────────────────────
+        // ── Mute / Camera toggles ───────────────────────────────────────────
         function toggleMute() {
             if (!localAudioTrack) return;
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
             document.getElementById('muteBtnCircle').textContent = isMuted ? '🔇' : '🎤';
             document.getElementById('muteLabel').textContent = isMuted ? 'Unmute' : 'Mute';
-            document.getElementById('muteBtnCircle').style.background = isMuted
-                ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('muteBtnCircle').style.background =
+                isMuted ? 'rgba(255,59,48,0.3)' : 'var(--card)';
         }
 
-        // ── Camera Toggle ───────────────────────────────────────────────────
         function toggleCamera() {
             if (!localVideoTrack) return;
             isCamOff = !isCamOff;
             localVideoTrack.setMuted(isCamOff);
-            document.getElementById('camBtnCircle').textContent = isCamOff ? '📷' : '📷';
+            document.getElementById('camBtnCircle').textContent = isCamOff ? '🚫' : '📷';
             document.getElementById('camLabel').textContent = isCamOff ? 'Show Cam' : 'Camera';
-            document.getElementById('camBtnCircle').style.background = isCamOff
-                ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('camBtnCircle').style.background =
+                isCamOff ? 'rgba(255,59,48,0.3)' : 'var(--card)';
         }
 
-        // ── Permissions & Init ──────────────────────────────────────────────
-        async function requestPermissions() {
-            document.getElementById('permissionModal').style.display = 'none';
-            updateStatus('🎥', 'Requesting Access...', 'Please tap Allow when prompted', true);
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                stream.getTracks().forEach(t => t.stop());
-                await initializeAgora();
-            } catch {
-                showError('Camera/microphone access denied. Please allow and refresh.', false);
-                document.getElementById('permissionModal').style.display = 'flex';
-                updateStatus('🔒', 'Permission Denied', 'Enable camera & mic in browser settings', false);
+        // ── Page visibility — pause/resume video when tab hidden ────────────
+        document.addEventListener('visibilitychange', () => {
+            if (!localVideoTrack) return;
+            if (document.hidden) {
+                localVideoTrack.setMuted(true);
+            } else if (!isCamOff) {
+                localVideoTrack.setMuted(false);
             }
-        }
+        });
 
+        // ── Clean up if user closes tab/browser ─────────────────────────────
+        window.addEventListener('pagehide', () => { fullCleanup(); });
+        window.addEventListener('beforeunload', () => { fullCleanup(); });
+
+        // ── Init ─────────────────────────────────────────────────────────────
         window.addEventListener('load', async () => {
             try {
                 const perm = await navigator.permissions.query({ name: 'camera' });
@@ -726,13 +538,19 @@
             }
         });
 
-        // Prevent accidental page close during call
-        window.addEventListener('beforeunload', (e) => {
-            if (localAudioTrack || localVideoTrack) {
-                e.preventDefault();
-                e.returnValue = '';
+        async function requestPermissions() {
+            document.getElementById('permissionModal').style.display = 'none';
+            updateStatus('🎥', 'Requesting Access...', 'Please tap Allow when prompted', true);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                stream.getTracks().forEach(t => t.stop());
+                await initializeAgora();
+            } catch {
+                showError('Camera/microphone access denied. Please allow and refresh.', false);
+                document.getElementById('permissionModal').style.display = 'flex';
+                updateStatus('🔒', 'Permission Denied', 'Enable camera & mic in browser settings', false);
             }
-        });
+        }
     </script>
 </body>
 </html>
