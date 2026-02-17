@@ -330,9 +330,11 @@
         let isMuted = false, isCamOff = false;
         let callStartTime = null, timerInterval = null;
         let adminJoined = false;
-        let isLeaving = false; // prevent double-leave
+        let isLeaving = false; 
 
-        // ── UI Helpers ──────────────────────────────────────────────────────
+        // [LOGIC FIX]: Always use UID 2 for visitor so it never clashes with Admin (UID 1)
+        const VISITOR_UID = 2; 
+
         function updateStatus(icon, text, subtext, showSpinner = false) {
             document.getElementById('statusIcon').textContent = icon;
             document.getElementById('statusText').textContent = text;
@@ -348,6 +350,7 @@
         }
 
         function startCallTimer() {
+            if (timerInterval) return;
             callStartTime = Date.now();
             timerInterval = setInterval(() => {
                 const s = Math.floor((Date.now() - callStartTime) / 1000);
@@ -361,36 +364,28 @@
             if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
         }
 
-        // ── FULL CLEANUP — stops camera/mic LED completely ──────────────────
         async function fullCleanup() {
             if (isLeaving) return;
             isLeaving = true;
 
             stopCallTimer();
 
-            // Stop and close audio track — releases mic
             if (localAudioTrack) {
-                try { localAudioTrack.stop(); } catch(e) {}
-                try { localAudioTrack.close(); } catch(e) {}
+                try { localAudioTrack.stop(); localAudioTrack.close(); } catch(e) {}
                 localAudioTrack = null;
             }
-
-            // Stop and close video track — releases camera LED
             if (localVideoTrack) {
-                try { localVideoTrack.stop(); } catch(e) {}
-                try { localVideoTrack.close(); } catch(e) {}
+                try { localVideoTrack.stop(); localVideoTrack.close(); } catch(e) {}
                 localVideoTrack = null;
             }
-
-            // Unpublish and leave channel
             if (client) {
-                try { await client.unpublish(); } catch(e) {}
                 try { await client.leave(); } catch(e) {}
                 client = null;
             }
+            // Navigate away to ensure the background task is killed by the browser
+            window.location.replace("about:blank");
         }
 
-        // ── Agora ───────────────────────────────────────────────────────────
         async function initializeAgora() {
             try {
                 updateStatus('🔗', 'Connecting...', 'Setting up secure video line', true);
@@ -398,7 +393,6 @@
 
                 client.on('user-published', async (user, mediaType) => {
                     await client.subscribe(user, mediaType);
-
                     if (mediaType === 'video') {
                         adminJoined = true;
                         const playerDiv = document.createElement('div');
@@ -412,36 +406,15 @@
                         document.getElementById('connectedBar').classList.remove('hidden');
                         startCallTimer();
                     }
-
                     if (mediaType === 'audio') user.audioTrack.play();
                 });
 
-                client.on('user-unpublished', (user, mediaType) => {
-                    if (mediaType === 'video') {
-                        const playerDiv = document.getElementById('player-' + user.uid);
-                        if (playerDiv) playerDiv.remove();
-                        if (adminJoined) {
-                            document.getElementById('statusOverlay').classList.remove('hidden');
-                            updateStatus('📹', 'Video Paused', 'Resident paused their camera', false);
-                        }
-                    }
-                });
-
                 client.on('user-left', async (user) => {
-                    // Only trigger end when admin who actually joined has left
-                    if (adminJoined) {
-                        adminJoined = false;
-                        stopCallTimer();
-                        document.getElementById('connectedBar').classList.add('hidden');
-                        document.getElementById('remote-video').innerHTML = '';
-                        document.getElementById('statusOverlay').classList.remove('hidden');
-                        document.getElementById('spinnerRow').classList.add('hidden');
-                        updateStatus('👋', 'Call Ended', 'The resident has ended the call', false);
-
-                        // Fully clean up camera/mic then close page
-                        await fullCleanup();
-                        setTimeout(() => { window.location.href = 'about:blank'; }, 2500);
-                    }
+                    console.log("Admin left the room.");
+                    // FIX: If the admin leaves, the visitor MUST hang up immediately
+                    // to prevent the "re-calling" loop in the Admin app.
+                    updateStatus('👋', 'Call Ended', 'Owner disconnected', false);
+                    await fullCleanup();
                 });
 
                 await joinCall();
@@ -450,52 +423,44 @@
                 console.error(err);
                 await fullCleanup();
                 showError('Failed to connect. Please refresh.', false);
-                updateStatus('⚠️', 'Connection Failed', 'Please refresh the page', false);
             }
         }
 
         async function joinCall() {
             try {
-                updateStatus('📞', 'Calling...', "Ringing the resident's device", true);
+                updateStatus('📞', 'Calling...', "Ringing the resident", true);
 
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
-                    { encoderConfig: 'music_standard' },
+                    { encoderConfig: 'speech_standard' },
                     { encoderConfig: '480p_1' }
                 );
 
                 localVideoTrack.play(document.getElementById('local-video'));
-                await client.join(APP_ID, CHANNEL_NAME, TOKEN, null);
+                
+                // Use the constant VISITOR_UID to prevent clashing
+                await client.join(APP_ID, CHANNEL_NAME, TOKEN, VISITOR_UID);
                 await client.publish([localAudioTrack, localVideoTrack]);
-                updateStatus('⏳', 'Waiting for Answer', 'Resident has been notified', true);
+                
+                updateStatus('⏳', 'Waiting...', 'Resident has been notified', true);
 
             } catch (err) {
                 console.error(err);
                 await fullCleanup();
-                showError('Failed to start call. Check your camera/mic permissions.');
-                updateStatus('⚠️', 'Failed to Call', 'Please refresh and try again', false);
+                showError('Camera/Mic permission required.');
             }
         }
 
-        // ── Manual hang up ──────────────────────────────────────────────────
         async function leaveCall() {
-            updateStatus('👋', 'Call Ended', 'Thank you for using DoorVi', false);
-            document.getElementById('spinnerRow').classList.add('hidden');
-            document.getElementById('connectedBar').classList.add('hidden');
-            document.getElementById('statusOverlay').classList.remove('hidden');
-
+            updateStatus('👋', 'Call Ended', 'Closing connection...', false);
             await fullCleanup();
-            setTimeout(() => { window.location.href = 'about:blank'; }, 2000);
         }
 
-        // ── Mute / Camera toggles ───────────────────────────────────────────
         function toggleMute() {
             if (!localAudioTrack) return;
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
             document.getElementById('muteBtnCircle').textContent = isMuted ? '🔇' : '🎤';
-            document.getElementById('muteLabel').textContent = isMuted ? 'Unmute' : 'Mute';
-            document.getElementById('muteBtnCircle').style.background =
-                isMuted ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('muteBtnCircle').style.background = isMuted ? 'rgba(255,59,48,0.3)' : 'var(--card)';
         }
 
         function toggleCamera() {
@@ -503,52 +468,22 @@
             isCamOff = !isCamOff;
             localVideoTrack.setMuted(isCamOff);
             document.getElementById('camBtnCircle').textContent = isCamOff ? '🚫' : '📷';
-            document.getElementById('camLabel').textContent = isCamOff ? 'Show Cam' : 'Camera';
-            document.getElementById('camBtnCircle').style.background =
-                isCamOff ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('camBtnCircle').style.background = isCamOff ? 'rgba(255,59,48,0.3)' : 'var(--card)';
         }
 
-        // ── Page visibility — pause/resume video when tab hidden ────────────
-        document.addEventListener('visibilitychange', () => {
-            if (!localVideoTrack) return;
-            if (document.hidden) {
-                localVideoTrack.setMuted(true);
-            } else if (!isCamOff) {
-                localVideoTrack.setMuted(false);
-            }
-        });
+        // Kill everything if they close the tab
+        window.onbeforeunload = function() { fullCleanup(); };
 
-        // ── Clean up if user closes tab/browser ─────────────────────────────
-        window.addEventListener('pagehide', () => { fullCleanup(); });
-        window.addEventListener('beforeunload', () => { fullCleanup(); });
-
-        // ── Init ─────────────────────────────────────────────────────────────
         window.addEventListener('load', async () => {
-            try {
-                const perm = await navigator.permissions.query({ name: 'camera' });
-                if (perm.state === 'granted') {
-                    await initializeAgora();
-                } else {
-                    document.getElementById('permissionModal').style.display = 'flex';
-                    document.getElementById('spinnerRow').classList.add('hidden');
-                }
-            } catch {
-                document.getElementById('permissionModal').style.display = 'flex';
-                document.getElementById('spinnerRow').classList.add('hidden');
-            }
+            document.getElementById('permissionModal').style.display = 'flex';
         });
 
         async function requestPermissions() {
             document.getElementById('permissionModal').style.display = 'none';
-            updateStatus('🎥', 'Requesting Access...', 'Please tap Allow when prompted', true);
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                stream.getTracks().forEach(t => t.stop());
                 await initializeAgora();
             } catch {
-                showError('Camera/microphone access denied. Please allow and refresh.', false);
-                document.getElementById('permissionModal').style.display = 'flex';
-                updateStatus('🔒', 'Permission Denied', 'Enable camera & mic in browser settings', false);
+                showError('Access denied.');
             }
         }
     </script>
