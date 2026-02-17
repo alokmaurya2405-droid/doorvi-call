@@ -358,9 +358,12 @@
                 });
 
                 client.on('user-left', () => {
-                    updateStatus('👋', 'Call Ended', 'Owner has left', false);
-                    document.getElementById('statusOverlay').classList.remove('hidden');
-                });
+    updateStatus('👋', 'Call Ended', 'Owner has disconnected', false);
+    // Immediately trigger the leave logic for the visitor too
+    setTimeout(() => {
+        leaveCall();
+    }, 1500); // 1.5 second delay so they see the "Call Ended" message
+});
 
                 await joinCall();
             } catch (error) {
