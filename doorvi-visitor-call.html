@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DoorVi — Call Resident</title>
+    <title>DoorVi — Futuristic Video Call</title>
     <style>
+        /* ===== RESET & BASE (keep every original line, only add new styles) ===== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
@@ -86,6 +87,193 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .status-text { font-size: 20px; font-weight: 600; }
         .hidden { display: none !important; }
+
+        /* ========== FUTURISTIC GLASSMORPHISM + NEON ACCENTS ========== */
+        /* Dark gradient background for in-call (overrides default gradient when active) */
+        .in-call {
+            background: radial-gradient(circle at 20% 30%, #1a1a2e, #0a0a1a 80%);
+        }
+
+        /* Fullscreen remote video gets a subtle neon rim */
+        #remote-video {
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(90, 60, 255, 0.3), 0 0 30px rgba(100, 80, 255, 0.4);
+            background: #0c0c1a; /* fallback while video loads */
+        }
+        /* add a soft animated glow around remote video (pseudo element) */
+        #remote-video::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            border: 2px solid transparent;
+            border-radius: inherit;
+            background: radial-gradient(circle at 30% 40%, rgba(120, 100, 255, 0.15), transparent 70%);
+            animation: remotePulse 6s infinite alternate;
+        }
+        @keyframes remotePulse {
+            0% { opacity: 0.4; }
+            100% { opacity: 0.9; }
+        }
+
+        /* ===== FLOATING GLASS LOCAL PREVIEW (top-right) ===== */
+        #local-video {
+            backdrop-filter: blur(16px) saturate(180%);
+            background: rgba(20, 20, 45, 0.4);
+            border: 1.5px solid rgba(180, 160, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(120, 80, 255, 0.2) inset, 0 0 30px #6b4eff;
+            transform: translateZ(0);
+            transition: box-shadow 0.3s, border-color 0.3s;
+            animation: localFloat 4s infinite alternate ease-in-out;
+        }
+        #local-video:hover {
+            border-color: #a88eff;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 2px rgba(180, 130, 255, 0.6) inset, 0 0 40px #9f7aff;
+        }
+        @keyframes localFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-6px); }
+        }
+
+        /* ===== BOTTOM FLOATING GLASS CONTROL BAR ===== */
+        .call-controls {
+            bottom: 50px;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.7));
+        }
+        /* glass bar background (extended behind buttons) */
+        .call-controls::before {
+            content: '';
+            position: absolute;
+            top: -10px; left: 50%; transform: translateX(-50%);
+            width: calc(100% + 60px);
+            height: 90px;
+            background: rgba(15, 15, 35, 0.3);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-radius: 70px;
+            border: 1px solid rgba(200, 180, 255, 0.25);
+            box-shadow: 0 25px 50px -8px rgba(0,0,0,0.8), 0 0 0 1px rgba(180, 160, 255, 0.3) inset, 0 0 40px #4a30bf;
+            z-index: -1;
+        }
+
+        /* individual buttons – modern neon glow + glass */
+        .ctrl-btn {
+            background: rgba(10, 10, 25, 0.5);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(210, 190, 255, 0.4);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 15px rgba(110, 70, 255, 0.6), 0 0 5px rgba(255,255,255,0.3) inset;
+            font-size: 28px; /* slightly larger icons */
+            color: white;
+            transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+            transform: scale(1);
+            width: 68px; height: 68px; border-radius: 40px;
+            margin: 0 5px;
+        }
+        .ctrl-btn:hover {
+            transform: scale(1.08);
+            border-color: #bca6ff;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8), 0 0 30px #9b7aff, 0 0 10px #c5aeff inset;
+        }
+        .ctrl-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* mute button specific extra purple/blue neon */
+        .ctrl-btn:first-child {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 20px #5f4fff, 0 0 5px rgba(255,255,255,0.3) inset;
+        }
+
+        /* END CALL (red neon glow) — we keep original class .btn-end and enhance */
+        .btn-end {
+            background: rgba(255, 50, 50, 0.3);
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 120, 120, 0.7);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 40px #ff4d4d, 0 0 15px rgba(255, 200, 200, 0.5) inset;
+            transform: rotate(135deg) scale(1);
+            width: 78px; height: 78px;
+            font-size: 36px;
+        }
+        .btn-end:hover {
+            transform: rotate(135deg) scale(1.1);
+            border-color: #ffa6a6;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.9), 0 0 60px #ff6666, 0 0 20px #ffb3b3 inset;
+        }
+        .btn-end:active {
+            transform: rotate(135deg) scale(0.95);
+        }
+        /* fix icon inside end button (original uses 📞) — keep emoji, but we also add pseudo for glow */
+        .btn-end {
+            color: #fff;
+            text-shadow: 0 0 15px #ffa0a0;
+        }
+
+        /* camera toggle extra purple glow */
+        .ctrl-btn:last-child {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6), 0 0 20px #b469ff, 0 0 5px rgba(255,255,255,0.3) inset;
+        }
+
+        /* status overlay with deeper glass and neon border */
+        .status-overlay {
+            background: rgba(5, 5, 20, 0.7);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(170, 140, 255, 0.35);
+            box-shadow: 0 0 60px rgba(100, 70, 255, 0.5) inset, 0 0 40px #3d2b99;
+            transition: opacity 0.4s;
+        }
+        .status-text {
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-shadow: 0 0 20px #b79eff;
+        }
+        .spinner::after {
+            border-color: rgba(255,255,255,0.2);
+            border-top-color: #b59eff;
+            box-shadow: 0 0 30px #a07dff;
+        }
+
+        /* additional glass badge in header – already has blur, add neon */
+        .header {
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(200, 170, 255, 0.35);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+        .house-badge {
+            background: rgba(40, 30, 70, 0.4);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(180, 150, 255, 0.5);
+            box-shadow: 0 0 20px #6d4fff;
+            color: #f0eaff;
+        }
+
+        /* pre-call also gets glassy update but we keep original mostly – optional enhance */
+        .pre-call .door-icon {
+            filter: drop-shadow(0 0 30px #8f7aff);
+        }
+        .call-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 50px #5f4fff;
+            transition: 0.2s;
+        }
+        .call-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 80px #8c75ff;
+        }
+
+        /* 3D depth via subtle transforms and shadows */
+        .in-call, #remote-video {
+            transform: translateZ(0);
+            will-change: transform;
+        }
+
+        /* smooth transitions for all interactive */
+        .ctrl-btn, .btn-end, .house-badge, #local-video {
+            transition: all 0.25s ease;
+        }
     </style>
 </head>
 <body>
@@ -119,6 +307,7 @@
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // ==================== ORIGINAL CODE (untouched) ====================
         const urlParams = new URLSearchParams(window.location.search);
         const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
         const CHANNEL = urlParams.get('channelName') || 'house_32_channel';
