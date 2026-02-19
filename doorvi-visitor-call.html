@@ -3,253 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DoorVi — Smart Door Call</title>
+    <title>DoorVi — Call Resident</title>
     <style>
-        :root {
-            --blue: #007AFF;
-            --green: #34C759;
-            --red: #FF3B30;
-            --dark: #0a0f1e;
-            --card: rgba(255,255,255,0.07);
-            --border: rgba(255,255,255,0.1);
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
-            background: var(--dark);
-            height: 100vh; height: -webkit-fill-available;
-            display: flex; flex-direction: column;
-            color: white; overflow: hidden; position: relative;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh; display: flex; flex-direction: column;
+            color: white; overflow: hidden;
         }
-        .bg-blob {
-            position: fixed; border-radius: 50%; filter: blur(80px);
-            opacity: 0.15; pointer-events: none; z-index: 0;
-            animation: blobFloat 8s ease-in-out infinite;
-        }
-        .bg-blob-1 { width: 400px; height: 400px; background: #007AFF; top: -100px; left: -100px; }
-        .bg-blob-2 { width: 300px; height: 300px; background: #5856D6; bottom: 0; right: -80px; animation-delay: 3s; }
-        .bg-blob-3 { width: 200px; height: 200px; background: #34C759; top: 40%; left: 30%; animation-delay: 5s; }
-        @keyframes blobFloat {
-            0%, 100% { transform: translate(0,0) scale(1); }
-            50% { transform: translate(20px,-20px) scale(1.05); }
-        }
-        .header, .video-container, .controls, .permission-request, .error-message { position: relative; z-index: 1; }
+
         .header {
-            padding: 18px 20px 14px; display: flex; align-items: center;
-            justify-content: space-between;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+            padding: 20px; display: flex; align-items: center; gap: 12px;
+            background: rgba(0,0,0,0.2); backdrop-filter: blur(10px);
         }
-        .logo-group { display: flex; align-items: center; gap: 10px; }
-        .logo-icon {
-            width: 42px; height: 42px;
-            background: linear-gradient(135deg, #007AFF, #5856D6);
-            border-radius: 13px; display: flex; align-items: center;
-            justify-content: center; font-size: 22px;
-            box-shadow: 0 4px 20px rgba(0,122,255,0.4);
-        }
-        .logo-text {
-            font-size: 22px; font-weight: 800; letter-spacing: 1px;
-            background: linear-gradient(90deg, #fff, rgba(255,255,255,0.7));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
+        .logo { font-size: 32px; }
+        .logo-text { font-size: 24px; font-weight: 800; }
         .house-badge {
-            background: var(--card); border: 1px solid var(--border);
-            backdrop-filter: blur(12px); padding: 6px 14px; border-radius: 20px;
-            font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85);
-            display: flex; align-items: center; gap: 6px;
+            margin-left: auto; background: rgba(255,255,255,0.2);
+            padding: 8px 16px; border-radius: 20px; font-weight: 600;
         }
-        .house-badge::before {
-            content: ''; width: 7px; height: 7px; background: var(--green);
-            border-radius: 50%; display: inline-block;
-            box-shadow: 0 0 6px var(--green); animation: livePulse 2s infinite;
+
+        /* ── Pre-Call Screen ─────────────────────────────────────────────── */
+        .pre-call {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 30px;
         }
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.3); }
+        .door-icon {
+            font-size: 100px; margin-bottom: 20px;
+            animation: doorFloat 3s ease-in-out infinite;
         }
-        .video-container { flex: 1; position: relative; width: 100%; overflow: hidden; }
-        #remote-video { width: 100%; height: 100%; background: transparent; }
+        @keyframes doorFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .pre-call h1 { font-size: 32px; margin-bottom: 12px; }
+        .pre-call p { font-size: 16px; opacity: 0.9; margin-bottom: 40px; }
+        .call-btn {
+            background: white; color: #667eea;
+            border: none; padding: 18px 60px; border-radius: 50px;
+            font-size: 18px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        .call-btn:active { transform: scale(0.95); }
+
+        /* ── In-Call Screen ──────────────────────────────────────────────── */
+        .in-call { display: none; flex: 1; position: relative; }
+        #remote-video { width: 100%; height: 100%; background: #000; }
         #local-video {
             position: absolute; top: 16px; right: 16px;
             width: 100px; height: 140px; border-radius: 18px;
-            border: 2px solid rgba(255,255,255,0.25);
-            background: rgba(0,0,0,0.5); z-index: 30; overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.3);
+            background: rgba(0,0,0,0.5); overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
+
+        .call-controls {
+            position: absolute; bottom: 40px; left: 0; right: 0;
+            display: flex; justify-content: center; gap: 20px;
+        }
+        .ctrl-btn {
+            width: 60px; height: 60px; border-radius: 30px;
+            background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; cursor: pointer; transition: all 0.2s;
+        }
+        .ctrl-btn:active { transform: scale(0.9); }
+        .btn-end {
+            background: #FF3B30; width: 70px; height: 70px; border-radius: 35px;
+            transform: rotate(135deg);
+        }
+        .btn-end:active { transform: rotate(135deg) scale(0.9); }
+
         .status-overlay {
-            position: absolute; inset: 0; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10;
-            background: radial-gradient(circle at center, rgba(0,0,0,0.3), transparent 70%);
-            padding: 40px;
-        }
-        .status-ring { position: relative; width: 120px; height: 120px; margin-bottom: 28px; }
-        .status-ring-outer {
-            position: absolute; inset: 0; border-radius: 50%;
-            border: 2px solid rgba(0,122,255,0.3);
-            animation: ringPulse 2.5s ease-in-out infinite;
-        }
-        .status-ring-mid {
-            position: absolute; inset: 12px; border-radius: 50%;
-            border: 2px solid rgba(0,122,255,0.2);
-            animation: ringPulse 2.5s ease-in-out infinite 0.4s;
-        }
-        .status-ring-inner {
-            position: absolute; inset: 24px; border-radius: 50%;
-            background: linear-gradient(135deg, rgba(0,122,255,0.3), rgba(88,86,214,0.3));
-            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15);
-            display: flex; align-items: center; justify-content: center; font-size: 36px;
-        }
-        @keyframes ringPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.15); opacity: 0.4; }
-        }
-        .status-text { font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; text-shadow: 0 2px 20px rgba(0,0,0,0.8); }
-        .status-subtext { font-size: 15px; color: rgba(255,255,255,0.55); text-align: center; }
-        .spinner-row { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
-        .dot { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; animation: dotBounce 1.2s infinite ease-in-out; }
-        .dot:nth-child(2) { animation-delay: 0.2s; }
-        .dot:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes dotBounce {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
-        .controls {
-            padding: 20px 30px calc(20px + env(safe-area-inset-bottom));
-            display: flex; justify-content: center; align-items: center; gap: 30px;
-            background: rgba(10,15,30,0.95); border-top: 1px solid var(--border);
-            backdrop-filter: blur(20px);
-        }
-        .ctrl-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; }
-        .ctrl-btn-circle {
-            width: 60px; height: 60px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 24px; transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-        .ctrl-btn-circle:active { transform: scale(0.88); }
-        .ctrl-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.5); }
-        .btn-end .ctrl-btn-circle {
-            background: linear-gradient(135deg, #FF3B30, #FF6B6B);
-            transform: rotate(135deg); box-shadow: 0 8px 24px rgba(255,59,48,0.4);
-        }
-        .btn-end .ctrl-btn-circle:active { transform: rotate(135deg) scale(0.88); }
-        .btn-mute .ctrl-btn-circle, .btn-cam .ctrl-btn-circle { background: var(--card); border: 1px solid var(--border); }
-        .error-message {
-            position: fixed; bottom: 120px; left: 16px; right: 16px;
-            background: rgba(255,59,48,0.92); backdrop-filter: blur(12px);
-            border-radius: 16px; padding: 14px 18px; text-align: center;
-            font-weight: 600; font-size: 14px; z-index: 200;
-            animation: slideUp 0.4s ease-out; box-shadow: 0 8px 30px rgba(255,59,48,0.3);
-        }
-        @keyframes slideUp {
-            from { transform: translateY(80px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .permission-request {
-            position: fixed; inset: 0; display: flex; flex-direction: column;
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+            display: flex; flex-direction: column;
             align-items: center; justify-content: center;
-            padding: 24px; z-index: 300; background: var(--dark);
         }
-        .permission-card {
-            width: 100%; max-width: 360px;
-            background: linear-gradient(145deg, #141a2e, #1a2340);
-            border: 1px solid var(--border); border-radius: 28px;
-            padding: 36px 28px; text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        .spinner { width: 50px; height: 50px; margin-bottom: 20px; }
+        .spinner::after {
+            content: ''; display: block; width: 50px; height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        .perm-icon-wrap {
-            width: 80px; height: 80px;
-            background: linear-gradient(135deg, rgba(0,122,255,0.2), rgba(88,86,214,0.2));
-            border: 1px solid rgba(0,122,255,0.3); border-radius: 24px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 38px; margin: 0 auto 22px;
-        }
-        .permission-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 10px; color: white; }
-        .permission-card p { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.6; margin-bottom: 28px; }
-        .permission-btn {
-            background: linear-gradient(135deg, #007AFF, #5856D6);
-            color: white; border: none; padding: 16px; border-radius: 16px;
-            font-size: 16px; font-weight: 700; cursor: pointer; width: 100%;
-            box-shadow: 0 8px 24px rgba(0,122,255,0.35); transition: all 0.2s;
-        }
-        .permission-btn:active { transform: scale(0.97); }
-        .perm-footer { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.5; }
-        .connected-bar {
-            position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
-            background: rgba(52,199,89,0.2); border: 1px solid rgba(52,199,89,0.4);
-            backdrop-filter: blur(10px); border-radius: 20px; padding: 6px 16px;
-            font-size: 13px; font-weight: 600; color: #34C759;
-            display: flex; align-items: center; gap: 6px; z-index: 20;
-            animation: fadeIn 0.4s ease;
-        }
-        .connected-bar::before {
-            content: ''; width: 7px; height: 7px; background: #34C759;
-            border-radius: 50%; animation: livePulse 1.5s infinite;
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status-text { font-size: 20px; font-weight: 600; }
+
         .hidden { display: none !important; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
     </style>
 </head>
 <body>
-    <div class="bg-blob bg-blob-1"></div>
-    <div class="bg-blob bg-blob-2"></div>
-    <div class="bg-blob bg-blob-3"></div>
-
     <div class="header">
-        <div class="logo-group">
-            <div class="logo-icon">🚪</div>
-            <div class="logo-text">DOORVI</div>
-        </div>
-        <div class="house-badge">House <span id="houseNumber">--</span></div>
+        <div class="logo">🚪</div>
+        <div class="logo-text">DoorVi</div>
+        <div class="house-badge">House <span id="houseNo">--</span></div>
     </div>
 
-    <div class="video-container">
+    <!-- PRE-CALL SCREEN -->
+    <div class="pre-call" id="preCall">
+        <div class="door-icon">🏠</div>
+        <h1>Call Resident</h1>
+        <p>Press the button below to start a video call</p>
+        <button class="call-btn" onclick="startCall()">📞 Start Call</button>
+    </div>
+
+    <!-- IN-CALL SCREEN -->
+    <div class="in-call" id="inCall">
         <div id="remote-video"></div>
         <div id="local-video"></div>
-        <div class="connected-bar hidden" id="connectedBar">
-            Connected · <span id="callTimer">00:00</span>
-        </div>
         <div class="status-overlay" id="statusOverlay">
-            <div class="status-ring">
-                <div class="status-ring-outer"></div>
-                <div class="status-ring-mid"></div>
-                <div class="status-ring-inner" id="statusIcon">📞</div>
-            </div>
-            <div class="status-text" id="statusText">Initializing...</div>
-            <div class="status-subtext" id="statusSubtext">Connecting to secure line</div>
-            <div class="spinner-row" id="spinnerRow">
-                <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            </div>
+            <div class="spinner"></div>
+            <div class="status-text" id="statusText">Connecting...</div>
         </div>
-    </div>
-
-    <div class="controls">
-        <button class="ctrl-btn btn-mute" onclick="toggleMute()">
-            <div class="ctrl-btn-circle" id="muteBtnCircle">🎤</div>
-            <span class="ctrl-label" id="muteLabel">Mute</span>
-        </button>
-        <button class="ctrl-btn btn-end" onclick="leaveCall()">
-            <div class="ctrl-btn-circle">📞</div>
-            <span class="ctrl-label" style="color:#FF3B30;">End</span>
-        </button>
-        <button class="ctrl-btn btn-cam" onclick="toggleCamera()">
-            <div class="ctrl-btn-circle" id="camBtnCircle">📷</div>
-            <span class="ctrl-label" id="camLabel">Camera</span>
-        </button>
-    </div>
-
-    <div class="error-message hidden" id="errorMessage"></div>
-
-    <div class="permission-request hidden" id="permissionModal">
-        <div class="permission-card">
-            <div class="perm-icon-wrap">🎥</div>
-            <h2>Enable Camera & Mic</h2>
-            <p>DoorVi needs access to your camera and microphone to connect you with the resident.</p>
-            <button class="permission-btn" onclick="requestPermissions()">Allow & Connect</button>
-            <div class="perm-footer">Your video is only shared during the call.<br>No data is stored.</div>
+        <div class="call-controls">
+            <button class="ctrl-btn" onclick="toggleMute()" id="muteBtn">🎤</button>
+            <button class="ctrl-btn btn-end" onclick="endCall()">📞</button>
+            <button class="ctrl-btn" onclick="toggleCamera()" id="camBtn">📷</button>
         </div>
     </div>
 
@@ -257,255 +130,109 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
-        const CHANNEL_NAME = urlParams.get('channelName') || 'house_32_channel';
+        const CHANNEL = urlParams.get('channel') || 'house_32_channel';
         const TOKEN = urlParams.get('token') || null;
-        const VISITOR_UID = 2; // fixed UID so it never clashes with admin
 
-        const houseMatch = CHANNEL_NAME.match(/house_(\w+)_channel/);
-        document.getElementById('houseNumber').textContent = houseMatch ? houseMatch[1] : '??';
+        const houseMatch = CHANNEL.match(/house_(\w+)_channel/);
+        document.getElementById('houseNo').textContent = houseMatch ? houseMatch[1] : '??';
 
         let client = null;
         let localAudioTrack = null;
         let localVideoTrack = null;
         let isMuted = false, isCamOff = false;
-        let callStartTime = null, timerInterval = null;
-        let adminJoined = false;
-        let isLeaving = false;
 
-        // ── UI helpers ──────────────────────────────────────────────────────
-        function updateStatus(icon, text, subtext, showSpinner = false) {
-            document.getElementById('statusIcon').textContent = icon;
-            document.getElementById('statusText').textContent = text;
-            document.getElementById('statusSubtext').textContent = subtext;
-            document.getElementById('spinnerRow').classList.toggle('hidden', !showSpinner);
-        }
+        async function startCall() {
+            console.log('[Visitor] Starting call...');
+            document.getElementById('preCall').style.display = 'none';
+            document.getElementById('inCall').style.display = 'flex';
 
-        function showError(msg, autoHide = true) {
-            const el = document.getElementById('errorMessage');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-            if (autoHide) setTimeout(() => el.classList.add('hidden'), 5000);
-        }
-
-        function startCallTimer() {
-            if (timerInterval) return;
-            callStartTime = Date.now();
-            timerInterval = setInterval(() => {
-                const s = Math.floor((Date.now() - callStartTime) / 1000);
-                const m = Math.floor(s / 60);
-                document.getElementById('callTimer').textContent =
-                    String(m).padStart(2,'0') + ':' + String(s % 60).padStart(2,'0');
-            }, 1000);
-        }
-
-        function stopCallTimer() {
-            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
-        }
-
-        // ── Full cleanup — stops camera/mic LED ─────────────────────────────
-        async function fullCleanup() {
-            if (isLeaving) {
-                console.log('[HTML] Already leaving, skip duplicate cleanup');
-                return;
-            }
-            isLeaving = true;
-            console.log('[HTML] 🛑 fullCleanup() started');
-
-            stopCallTimer();
-
-            // ✅ stop() releases the hardware (camera LED goes off)
-            // ✅ close() releases the track object
-            if (localAudioTrack) {
-                try { localAudioTrack.stop(); localAudioTrack.close(); } catch(e) { console.log('[HTML] audio track error:', e); }
-                localAudioTrack = null;
-                console.log('[HTML] 🎤 Audio track released');
-            }
-
-            if (localVideoTrack) {
-                try { localVideoTrack.stop(); localVideoTrack.close(); } catch(e) { console.log('[HTML] video track error:', e); }
-                localVideoTrack = null;
-                console.log('[HTML] 📹 Video track released — camera LED off');
-            }
-
-            if (client) {
-                try {
-                    await client.unpublish(); // ✅ unpublish first
-                    console.log('[HTML] 📤 Unpublished tracks');
-                } catch(e) { console.log('[HTML] unpublish error:', e); }
-
-                try {
-                    await client.leave(); // ✅ then leave
-                    console.log('[HTML] 📤 Left channel');
-                } catch(e) { console.log('[HTML] leave error:', e); }
-
-                client = null;
-            }
-
-            console.log('[HTML] ✅ fullCleanup() complete');
-        }
-
-        // ── Agora setup ─────────────────────────────────────────────────────
-        async function initializeAgora() {
             try {
-                updateStatus('🔗', 'Connecting...', 'Setting up secure video line', true);
                 client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
                 client.on('user-published', async (user, mediaType) => {
-                    console.log('[HTML] Admin published:', mediaType);
+                    console.log('[Visitor] Admin published:', mediaType);
                     await client.subscribe(user, mediaType);
 
                     if (mediaType === 'video') {
-                        adminJoined = true;
                         const playerDiv = document.createElement('div');
-                        playerDiv.id = 'player-' + user.uid;
                         playerDiv.style.width = '100%';
                         playerDiv.style.height = '100%';
                         document.getElementById('remote-video').innerHTML = '';
                         document.getElementById('remote-video').appendChild(playerDiv);
                         user.videoTrack.play(playerDiv);
                         document.getElementById('statusOverlay').classList.add('hidden');
-                        document.getElementById('connectedBar').classList.remove('hidden');
-                        startCallTimer();
-                        console.log('[HTML] ✅ Admin video playing');
+                        console.log('[Visitor] Admin video playing');
                     }
                     if (mediaType === 'audio') {
                         user.audioTrack.play();
-                        console.log('[HTML] ✅ Admin audio playing');
+                        console.log('[Visitor] Admin audio playing');
                     }
-                });
-
-                client.on('user-unpublished', (user, mediaType) => {
-                    // Admin toggled camera/mic — don't end call
-                    console.log('[HTML] Admin unpublished:', mediaType, '— not ending call');
                 });
 
                 client.on('user-left', async (user) => {
-                    // ✅ Only end call if it was the admin who genuinely left
-                    if (adminJoined) {
-                        console.log('[HTML] 👋 Admin left — ending call');
-                        adminJoined = false;
-                        stopCallTimer();
-                        document.getElementById('connectedBar').classList.add('hidden');
-                        document.getElementById('remote-video').innerHTML = '';
-                        document.getElementById('statusOverlay').classList.remove('hidden');
-                        document.getElementById('spinnerRow').classList.add('hidden');
-                        updateStatus('👋', 'Call Ended', 'Resident has ended the call', false);
-
-                        // ✅ Give user 2.5s to read the message THEN cleanup
-                        setTimeout(async () => {
-                            await fullCleanup();
-                        }, 2500);
-                    }
+                    console.log('[Visitor] Admin left the call');
+                    document.getElementById('statusText').textContent = 'Call Ended';
+                    document.getElementById('statusOverlay').classList.remove('hidden');
+                    setTimeout(() => endCall(), 2000);
                 });
 
-                await joinCall();
-
-            } catch (err) {
-                console.error('[HTML] initializeAgora error:', err);
-                await fullCleanup();
-                showError('Failed to connect. Please refresh.', false);
-                updateStatus('⚠️', 'Connection Failed', 'Please refresh the page', false);
-            }
-        }
-
-        async function joinCall() {
-            try {
-                updateStatus('📞', 'Calling...', "Ringing the resident's device", true);
-
+                // Create tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
                     { encoderConfig: 'speech_standard' },
                     { encoderConfig: '480p_1' }
                 );
 
                 localVideoTrack.play(document.getElementById('local-video'));
-                await client.join(APP_ID, CHANNEL_NAME, TOKEN, VISITOR_UID);
+
+                // Join as UID 2 (visitor)
+                await client.join(APP_ID, CHANNEL, TOKEN, 2);
                 await client.publish([localAudioTrack, localVideoTrack]);
-                console.log('[HTML] ✅ Joined and published as UID:', VISITOR_UID);
-                updateStatus('⏳', 'Waiting...', 'Resident has been notified', true);
+
+                document.getElementById('statusText').textContent = 'Waiting for resident...';
+                console.log('[Visitor] Joined channel successfully');
 
             } catch (err) {
-                console.error('[HTML] joinCall error:', err);
-                await fullCleanup();
-                showError('Camera/Mic permission required or connection failed.');
-                updateStatus('⚠️', 'Failed to Call', 'Please refresh and try again', false);
+                console.error('[Visitor] Error:', err);
+                document.getElementById('statusText').textContent = 'Connection failed';
+                setTimeout(() => { window.location.reload(); }, 3000);
             }
         }
 
-        // Manual hang up by visitor
-        async function leaveCall() {
-            console.log('[HTML] 🔴 Visitor pressed End');
-            updateStatus('👋', 'Call Ended', 'Thank you for using DoorVi', false);
-            document.getElementById('spinnerRow').classList.add('hidden');
-            document.getElementById('connectedBar').classList.add('hidden');
-            document.getElementById('statusOverlay').classList.remove('hidden');
-            await fullCleanup();
+        async function endCall() {
+            console.log('[Visitor] Ending call...');
+            if (localAudioTrack) {
+                localAudioTrack.stop();
+                localAudioTrack.close();
+            }
+            if (localVideoTrack) {
+                localVideoTrack.stop();
+                localVideoTrack.close();
+            }
+            if (client) {
+                await client.leave();
+            }
+            window.location.href = 'about:blank';
         }
 
         function toggleMute() {
             if (!localAudioTrack) return;
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
-            document.getElementById('muteBtnCircle').textContent = isMuted ? '🔇' : '🎤';
-            document.getElementById('muteLabel').textContent = isMuted ? 'Unmute' : 'Mute';
-            document.getElementById('muteBtnCircle').style.background =
-                isMuted ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🎤';
+            document.getElementById('muteBtn').style.background =
+                isMuted ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.2)';
         }
 
         function toggleCamera() {
             if (!localVideoTrack) return;
             isCamOff = !isCamOff;
             localVideoTrack.setMuted(isCamOff);
-            document.getElementById('camBtnCircle').textContent = isCamOff ? '🚫' : '📷';
-            document.getElementById('camLabel').textContent = isCamOff ? 'Show Cam' : 'Camera';
-            document.getElementById('camBtnCircle').style.background =
-                isCamOff ? 'rgba(255,59,48,0.3)' : 'var(--card)';
+            document.getElementById('camBtn').textContent = isCamOff ? '🚫' : '📷';
+            document.getElementById('camBtn').style.background =
+                isCamOff ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.2)';
         }
 
-        // ✅ Cleanup on tab close/browser close
-        window.addEventListener('pagehide', () => { fullCleanup(); });
-        window.addEventListener('beforeunload', () => { fullCleanup(); });
-
-        // ── Init — check permissions first ──────────────────────────────────
-        window.addEventListener('load', async () => {
-            console.log('[HTML] Page loaded, checking permissions...');
-            try {
-                // ✅ Check if already granted — skip modal if so
-                const camPerm = await navigator.permissions.query({ name: 'camera' });
-                const micPerm = await navigator.permissions.query({ name: 'microphone' });
-                console.log('[HTML] Camera:', camPerm.state, '| Mic:', micPerm.state);
-
-                if (camPerm.state === 'granted' && micPerm.state === 'granted') {
-                    console.log('[HTML] Permissions already granted — auto connecting');
-                    await initializeAgora();
-                } else {
-                    console.log('[HTML] Permissions not granted — showing modal');
-                    document.getElementById('permissionModal').classList.remove('hidden');
-                    document.getElementById('spinnerRow').classList.add('hidden');
-                }
-            } catch (e) {
-                // Some browsers don't support permissions API — show modal as fallback
-                console.log('[HTML] permissions API not supported — showing modal');
-                document.getElementById('permissionModal').classList.remove('hidden');
-                document.getElementById('spinnerRow').classList.add('hidden');
-            }
-        });
-
-        async function requestPermissions() {
-            document.getElementById('permissionModal').classList.add('hidden');
-            updateStatus('🎥', 'Requesting Access...', 'Please tap Allow when prompted', true);
-            try {
-                // Test permissions with a quick getUserMedia
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                stream.getTracks().forEach(t => t.stop()); // release test stream
-                console.log('[HTML] ✅ Permissions granted by user');
-                await initializeAgora();
-            } catch (e) {
-                console.log('[HTML] ❌ Permission denied:', e);
-                showError('Camera/microphone access denied. Please allow and refresh.', false);
-                document.getElementById('permissionModal').classList.remove('hidden');
-                updateStatus('🔒', 'Permission Denied', 'Enable camera & mic in browser settings', false);
-            }
-        }
+        window.addEventListener('beforeunload', () => endCall());
     </script>
 </body>
 </html>
