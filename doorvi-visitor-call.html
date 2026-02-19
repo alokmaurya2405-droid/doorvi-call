@@ -202,11 +202,28 @@
         }
 
         async function endCall() {
-            if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); }
-            if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); }
-            if (client) { await client.leave(); }
-            window.location.href = 'about:blank';
-        }
+    console.log('[Visitor] Ending call and signaling app...');
+    
+    // 1. SIGNALING: Tell the app the visitor hung up
+    try {
+        await _supabase
+            .from('call_logs')
+            .insert([{ 
+                house_no: houseId, 
+                status: 'Cancelled' 
+            }]);
+    } catch (e) {
+        console.error('Failed to send cancel signal:', e);
+    }
+
+    // 2. Existing Agora cleanup
+    if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); }
+    if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); }
+    if (client) { await client.leave(); }
+    
+    // 3. Close or redirect
+    window.location.href = 'about:blank';
+}
 
         function toggleMute() {
             if (!localAudioTrack) return;
