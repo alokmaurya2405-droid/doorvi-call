@@ -121,13 +121,12 @@
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
-        const CHANNEL = urlParams.get('channel') || 'house_32_channel';
+        const CHANNEL = urlParams.get('channelName') || 'house_32_channel';
         const TOKEN = urlParams.get('token') || null;
 
-        // --- SUPABASE CONFIG ---
-        // REPLACE THESE WITH YOUR ACTUAL SUPABASE URL AND KEY
-        const SUPABASE_URL = 'https://your-project-url.supabase.co';
-        const SUPABASE_KEY = 'your-anon-key';
+        // --- UPDATED SUPABASE CONFIG ---
+        const SUPABASE_URL = 'https://cutfmrazvrjbdxlfyhrk.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dGZtcmF6dnJqYmR4bHlmcmhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMTgwNzcsImV4cCI6MjA4Njg5NDA3N30.bJ_IQJUtzgmi9kI5od6jLmPqsxbTgllyHFxLdrToP3o';
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const houseMatch = CHANNEL.match(/house_(\w+)_channel/);
@@ -142,7 +141,7 @@
         async function startCall() {
             console.log('[Visitor] Ringing the bell via Supabase...');
             
-            // 1. Send Signal to Admin App first
+            // 1. Send Signal to Admin App
             try {
                 await _supabase
                     .from('call_logs')
@@ -158,9 +157,7 @@
                 client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 
                 client.on('user-published', async (user, mediaType) => {
-                    console.log('[Visitor] Admin published:', mediaType);
                     await client.subscribe(user, mediaType);
-
                     if (mediaType === 'video') {
                         const playerDiv = document.createElement('div');
                         playerDiv.style.width = '100%';
@@ -176,23 +173,20 @@
                 });
 
                 client.on('user-left', async (user) => {
-                    document.getElementById('statusText').textContent = 'Call Ended';
+                    document.getElementById('statusText').textContent = 'Resident Disconnected';
                     document.getElementById('statusOverlay').classList.remove('hidden');
                     setTimeout(() => endCall(), 2000);
                 });
 
-                [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
-                    { encoderConfig: 'speech_standard' },
-                    { encoderConfig: '480p_1' }
-                );
+                [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
 
                 localVideoTrack.play(document.getElementById('local-video'));
 
+                // Visitor joins as UID 2 to avoid clashes with Admin (999)
                 await client.join(APP_ID, CHANNEL, TOKEN, 2);
                 await client.publish([localAudioTrack, localVideoTrack]);
 
                 document.getElementById('statusText').textContent = 'Waiting for resident...';
-                console.log('[Visitor] Joined channel successfully');
 
             } catch (err) {
                 console.error('[Visitor] Error:', err);
@@ -202,28 +196,24 @@
         }
 
         async function endCall() {
-    console.log('[Visitor] Ending call and signaling app...');
-    
-    // 1. SIGNALING: Tell the app the visitor hung up
-    try {
-        await _supabase
-            .from('call_logs')
-            .insert([{ 
-                house_no: houseId, 
-                status: 'Cancelled' 
-            }]);
-    } catch (e) {
-        console.error('Failed to send cancel signal:', e);
-    }
+            console.log('[Visitor] Ending call and signaling app...');
+            
+            // Send Cancelled signal so Admin Modal closes automatically
+            try {
+                await _supabase
+                    .from('call_logs')
+                    .insert([{ house_no: houseId, status: 'Cancelled' }]);
+            } catch (e) {
+                console.error('Failed to send cancel signal:', e);
+            }
 
-    // 2. Existing Agora cleanup
-    if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); }
-    if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); }
-    if (client) { await client.leave(); }
-    
-    // 3. Close or redirect
-    window.location.href = 'about:blank';
-}
+            if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); }
+            if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); }
+            if (client) { await client.leave(); }
+            
+            // Redirect to blank to clear camera state
+            window.location.href = 'about:blank';
+        }
 
         function toggleMute() {
             if (!localAudioTrack) return;
