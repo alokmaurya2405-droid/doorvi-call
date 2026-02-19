@@ -12,7 +12,6 @@
             height: 100vh; display: flex; flex-direction: column;
             color: white; overflow: hidden;
         }
-
         .header {
             padding: 20px; display: flex; align-items: center; gap: 12px;
             background: rgba(0,0,0,0.2); backdrop-filter: blur(10px);
@@ -23,8 +22,6 @@
             margin-left: auto; background: rgba(255,255,255,0.2);
             padding: 8px 16px; border-radius: 20px; font-weight: 600;
         }
-
-        /* ── Pre-Call Screen ─────────────────────────────────────────────── */
         .pre-call {
             flex: 1; display: flex; flex-direction: column;
             align-items: center; justify-content: center; padding: 30px;
@@ -47,8 +44,6 @@
             transition: all 0.2s;
         }
         .call-btn:active { transform: scale(0.95); }
-
-        /* ── In-Call Screen ──────────────────────────────────────────────── */
         .in-call { display: none; flex: 1; position: relative; }
         #remote-video { width: 100%; height: 100%; background: #000; }
         #local-video {
@@ -58,7 +53,6 @@
             background: rgba(0,0,0,0.5); overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
-
         .call-controls {
             position: absolute; bottom: 40px; left: 0; right: 0;
             display: flex; justify-content: center; gap: 20px;
@@ -76,7 +70,6 @@
             transform: rotate(135deg);
         }
         .btn-end:active { transform: rotate(135deg) scale(0.9); }
-
         .status-overlay {
             position: absolute; inset: 0;
             background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
@@ -92,7 +85,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .status-text { font-size: 20px; font-weight: 600; }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -103,7 +95,6 @@
         <div class="house-badge">House <span id="houseNo">--</span></div>
     </div>
 
-    <!-- PRE-CALL SCREEN -->
     <div class="pre-call" id="preCall">
         <div class="door-icon">🏠</div>
         <h1>Call Resident</h1>
@@ -111,7 +102,6 @@
         <button class="call-btn" onclick="startCall()">📞 Start Call</button>
     </div>
 
-    <!-- IN-CALL SCREEN -->
     <div class="in-call" id="inCall">
         <div id="remote-video"></div>
         <div id="local-video"></div>
@@ -127,14 +117,22 @@
     </div>
 
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const APP_ID = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
         const CHANNEL = urlParams.get('channel') || 'house_32_channel';
         const TOKEN = urlParams.get('token') || null;
 
+        // --- SUPABASE CONFIG ---
+        // REPLACE THESE WITH YOUR ACTUAL SUPABASE URL AND KEY
+        const SUPABASE_URL = 'https://your-project-url.supabase.co';
+        const SUPABASE_KEY = 'your-anon-key';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const houseMatch = CHANNEL.match(/house_(\w+)_channel/);
-        document.getElementById('houseNo').textContent = houseMatch ? houseMatch[1] : '??';
+        const houseId = houseMatch ? houseMatch[1] : '32';
+        document.getElementById('houseNo').textContent = houseId;
 
         let client = null;
         let localAudioTrack = null;
@@ -142,7 +140,17 @@
         let isMuted = false, isCamOff = false;
 
         async function startCall() {
-            console.log('[Visitor] Starting call...');
+            console.log('[Visitor] Ringing the bell via Supabase...');
+            
+            // 1. Send Signal to Admin App first
+            try {
+                await _supabase
+                    .from('call_logs')
+                    .insert([{ house_no: houseId, status: 'Incoming Call' }]);
+            } catch (e) {
+                console.error('Signaling failed', e);
+            }
+
             document.getElementById('preCall').style.display = 'none';
             document.getElementById('inCall').style.display = 'flex';
 
@@ -161,22 +169,18 @@
                         document.getElementById('remote-video').appendChild(playerDiv);
                         user.videoTrack.play(playerDiv);
                         document.getElementById('statusOverlay').classList.add('hidden');
-                        console.log('[Visitor] Admin video playing');
                     }
                     if (mediaType === 'audio') {
                         user.audioTrack.play();
-                        console.log('[Visitor] Admin audio playing');
                     }
                 });
 
                 client.on('user-left', async (user) => {
-                    console.log('[Visitor] Admin left the call');
                     document.getElementById('statusText').textContent = 'Call Ended';
                     document.getElementById('statusOverlay').classList.remove('hidden');
                     setTimeout(() => endCall(), 2000);
                 });
 
-                // Create tracks
                 [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks(
                     { encoderConfig: 'speech_standard' },
                     { encoderConfig: '480p_1' }
@@ -184,7 +188,6 @@
 
                 localVideoTrack.play(document.getElementById('local-video'));
 
-                // Join as UID 2 (visitor)
                 await client.join(APP_ID, CHANNEL, TOKEN, 2);
                 await client.publish([localAudioTrack, localVideoTrack]);
 
@@ -199,18 +202,9 @@
         }
 
         async function endCall() {
-            console.log('[Visitor] Ending call...');
-            if (localAudioTrack) {
-                localAudioTrack.stop();
-                localAudioTrack.close();
-            }
-            if (localVideoTrack) {
-                localVideoTrack.stop();
-                localVideoTrack.close();
-            }
-            if (client) {
-                await client.leave();
-            }
+            if (localAudioTrack) { localAudioTrack.stop(); localAudioTrack.close(); }
+            if (localVideoTrack) { localVideoTrack.stop(); localVideoTrack.close(); }
+            if (client) { await client.leave(); }
             window.location.href = 'about:blank';
         }
 
@@ -219,8 +213,6 @@
             isMuted = !isMuted;
             localAudioTrack.setMuted(isMuted);
             document.getElementById('muteBtn').textContent = isMuted ? '🔇' : '🎤';
-            document.getElementById('muteBtn').style.background =
-                isMuted ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.2)';
         }
 
         function toggleCamera() {
@@ -228,8 +220,6 @@
             isCamOff = !isCamOff;
             localVideoTrack.setMuted(isCamOff);
             document.getElementById('camBtn').textContent = isCamOff ? '🚫' : '📷';
-            document.getElementById('camBtn').style.background =
-                isCamOff ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.2)';
         }
 
         window.addEventListener('beforeunload', () => endCall());
