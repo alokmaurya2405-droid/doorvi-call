@@ -106,8 +106,7 @@
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #fff, #bbe1fa);
             -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
 
         .house-badge {
@@ -322,115 +321,6 @@
         .hidden {
             display: none !important;
         }
-
-        /* Host Message Popup */
-        #host-msg-container {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: none;
-            width: 85%;
-            max-width: 400px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 20px;
-            padding: 15px 20px;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .animate-msg {
-            animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes slideDown {
-            from {
-                top: -100px;
-                opacity: 0;
-            }
-
-            to {
-                top: 20px;
-                opacity: 1;
-            }
-        }
-
-        .host-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: #007AFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            flex-shrink: 0;
-        }
-
-        .host-msg-content {
-            flex: 1;
-        }
-
-        .host-msg-label {
-            color: #007AFF;
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        #host-msg-text {
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
-            line-height: 1.4;
-        }
-
-        /* Quick Notes Tray */
-        .notes-tray {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 0.8rem;
-            width: 100%;
-        }
-
-        .note-btn {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            color: rgba(255, 255, 255, 0.8);
-            padding: 0.6rem 1rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .note-btn:active {
-            background: #007AFF;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        .note-sent-feedback {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #34C759;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-weight: 700;
-            z-index: 2000;
-            display: none;
-            box-shadow: 0 10px 20px rgba(52, 199, 89, 0.3);
-        }
     </style>
 </head>
 
@@ -457,30 +347,10 @@
 
             <button class="ring-btn" id="ringBtn" disabled>Connecting...</button>
             <div class="status-footer" id="statusLabel">Initializing RTM...</div>
-
-            <div class="notes-tray">
-                <button class="note-btn" onclick="sendNote('📦 Left Package')">📦 Left Package</button>
-                <button class="note-btn" onclick="sendNote('📝 Left Note')">📝 Left Note</button>
-                <button class="note-btn" onclick="sendNote('🚶 Will Come Back')">🚶 Will Come Back</button>
-            </div>
         </div>
-
-        <div id="noteFeedback" class="note-sent-feedback">Message Sent to Resident!</div>
 
         <!-- In-call UI -->
         <div class="video-container" id="videoLayout">
-            <div id="host-msg-container">
-                <div class="host-avatar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                </div>
-                <div class="host-msg-content">
-                    <div class="host-msg-label">Resident Says</div>
-                    <div id="host-msg-text">Wait a minute, I am coming!</div>
-                </div>
-            </div>
             <div id="remote-video"></div>
             <div id="local-video-small"></div>
 
@@ -547,54 +417,11 @@
                         location.reload();
                         alert("The resident is currently unavailable.");
                     }
-                    if (message.text === 'CALL_ENDED') {
-                        console.log("[RTM] Host ended the call");
-                        endSession();
-                    }
-                    if (message.text.startsWith('QUICK_REPLY:')) {
-                        const reply = message.text.replace('QUICK_REPLY:', '');
-                        showHostMessage(reply);
-                    }
                 });
             } catch (e) {
                 console.error(e);
                 updateStatus('❌ Camera Access Required');
             }
-        }
-
-        function showHostMessage(text) {
-            const container = document.getElementById('host-msg-container');
-            const msgEl = document.getElementById('host-msg-text');
-
-            msgEl.innerText = text;
-            container.style.display = 'flex';
-            container.classList.add('animate-msg');
-
-            // Text to Speech
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.pitch = 1.1;
-                utterance.rate = 0.9;
-                window.speechSynthesis.speak(utterance);
-            }
-
-            // Auto hide after 10 seconds
-            setTimeout(() => {
-                container.style.display = 'none';
-                container.classList.remove('animate-msg');
-            }, 10000);
-        }
-
-        function sendNote(msg) {
-            if (!rtmClient) return;
-            const payload = `VISITOR_NOTE:${msg}`;
-            rtmClient.sendMessageToPeer({ text: payload }, targetId)
-                .then(() => {
-                    const fb = document.getElementById('noteFeedback');
-                    fb.style.display = 'block';
-                    setTimeout(() => fb.style.display = 'none', 3000);
-                })
-                .catch(e => console.error(e));
         }
 
         function takeSnapshot() {
