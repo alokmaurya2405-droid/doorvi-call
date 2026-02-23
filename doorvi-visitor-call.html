@@ -8,7 +8,7 @@
 
     <!-- Agora SDKs -->
     <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.19.0.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/agora-rtm-sdk@1.5.1/index.js"></script>
+    <script src="https://download.agora.io/sdk/release/agora-rtm-sdk-1.5.1.js"></script>
 
     <!-- Modern Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -363,12 +363,24 @@
                 <button class="icon-btn btn-mute" id="muteBtn" onclick="toggleMute()">🎤</button>
                 <button class="icon-btn btn-end" onclick="endSession()">📞</button>
             </div>
+            <div id="debug-console"
+                style="margin-top: 10px; font-family: monospace; font-size: 10px; color: #4CAF50; text-align: left; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; max-height: 80px; overflow-y: auto;">
+            </div>
         </div>
     </main>
 
     <canvas id="snapshot-canvas" width="128" height="128"></canvas>
 
     <script>
+        const debugConsole = document.getElementById('debug-console');
+        function log(msg) {
+            console.log(msg);
+            const div = document.createElement('div');
+            div.innerText = `> ${msg}`;
+            debugConsole.appendChild(div);
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const appId = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
 
@@ -380,7 +392,11 @@
 
         const channelName = `house_${houseNo}_channel`;
         const targetId = `house_${houseNo}`;
-        const visitorId = "Visitor_" + Math.floor(Math.random() * 9999);
+
+        // Use a persistent session ID for RTM, but we will send a unique 
+        // Caller Identity in the payload if needed. 
+        // For now, let's just make the RTM login unique per refresh:
+        const visitorId = "Visitor_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
 
         document.getElementById('houseNum').innerText = houseNo;
 
@@ -392,14 +408,26 @@
         let hasAnswered = false;
 
         async function init() {
+            log("Starting System...");
             try {
                 // 1. Camera Preview
+                log("Requesting Camera...");
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 document.getElementById('preview-video').srcObject = stream;
+                log("✅ Camera Active");
 
                 // 2. Signaling
+                log("Connecting to RTM...");
                 rtmClient = AgoraRTM.createInstance(appId);
-                await rtmClient.login({ uid: visitorId });
+
+                // Add explicit handlers before login
+                rtmClient.on('ConnectionStateChanged', (state, reason) => {
+                    log(`RTM Status: ${state}`);
+                });
+
+                await rtmClient.login({ token: null, uid: visitorId });
+                log("✅ RTM Login Success");
+                log(`UID: ${visitorId}`);
 
                 updateStatus('🟢 System Ready');
                 const ringBtn = document.getElementById('ringBtn');
@@ -407,20 +435,31 @@
                 ringBtn.innerText = 'Ring Doorbell';
 
                 rtmClient.on('MessageFromPeer', (message) => {
-                    console.log("[RTM] From Phone:", message.text);
+                    log("Message from App: " + message.text);
                     if (message.text === 'CALL_ACCEPTED') {
                         hasAnswered = true;
                         clearInterval(signalTimer);
                         document.getElementById('statusOverlay').classList.add('hidden');
+                        log("🔔 CALL ACCEPTED!");
                     }
                     if (message.text === 'CALL_REJECTED') {
-                        location.reload();
+                        log("❌ CALL REJECTED");
                         alert("The resident is currently unavailable.");
+                        location.reload();
+                    }
+                    if (message.text === 'CALL_ENDED') {
+                        log("⏹️ CALL ENDED BY HOST");
+                        endSession();
                     }
                 });
             } catch (e) {
+                log("❌ ERROR: " + e.message);
                 console.error(e);
-                updateStatus('❌ Camera Access Required');
+                if (e.message.includes("Permission") || e.message.includes("camera")) {
+                    updateStatus('❌ Camera Access Denied');
+                } else {
+                    updateStatus('❌ Connection Failed');
+                }
             }
         }
 
