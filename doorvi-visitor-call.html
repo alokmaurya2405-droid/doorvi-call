@@ -37,7 +37,6 @@
             position: relative;
         }
 
-        /* Floating Orbs for Futuristic Vibe */
         .orb {
             position: absolute;
             border-radius: 50%;
@@ -65,20 +64,11 @@
         }
 
         @keyframes float {
-            0% {
-                transform: translate(0, 0);
-            }
-
-            50% {
-                transform: translate(20px, 40px);
-            }
-
-            100% {
-                transform: translate(0, 0);
-            }
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 40px); }
+            100% { transform: translate(0, 0); }
         }
 
-        /* Header */
         .header {
             padding: 1.2rem 2rem;
             display: flex;
@@ -96,9 +86,7 @@
             gap: 0.8rem;
         }
 
-        .logo-icon {
-            font-size: 1.8rem;
-        }
+        .logo-icon { font-size: 1.8rem; }
 
         .logo-text {
             font-size: 1.5rem;
@@ -119,7 +107,6 @@
             color: #007AFF;
         }
 
-        /* Container */
         .container {
             flex: 1;
             display: flex;
@@ -130,7 +117,6 @@
             z-index: 5;
         }
 
-        /* Glass Panel */
         .glass-panel {
             background: rgba(25, 30, 50, 0.4);
             backdrop-filter: blur(25px);
@@ -141,6 +127,40 @@
             width: 100%;
             padding: 3rem 2rem;
             text-align: center;
+        }
+
+        /* ── VISITOR WELCOME BANNER ── */
+        .welcome-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(0,122,255,0.25), rgba(88,86,214,0.25));
+            border: 1px solid rgba(0, 122, 255, 0.4);
+            border-radius: 1rem;
+            padding: 0.8rem 1.2rem;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .welcome-banner.show { display: block; }
+
+        .welcome-banner .wb-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .welcome-banner .wb-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .welcome-banner .wb-sub {
+            font-size: 0.78rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 0.2rem;
         }
 
         .camera-preview-container {
@@ -176,7 +196,6 @@
             line-height: 1.5;
         }
 
-        /* Hybrid Button */
         .ring-btn {
             background: linear-gradient(135deg, #007AFF, #0055BB);
             color: white;
@@ -188,7 +207,7 @@
             width: 100%;
             cursor: pointer;
             transition: 0.3s;
-            box-shadow: 0 10px 20px rgba(0, 122, 255, 0.3), inset 0 2px 10px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 20px rgba(0,122,255,0.3), inset 0 2px 10px rgba(255,255,255,0.2);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -200,11 +219,8 @@
             box-shadow: none;
         }
 
-        .ring-btn:active {
-            transform: scale(0.97);
-        }
+        .ring-btn:active { transform: scale(0.97); }
 
-        /* Video Layout */
         .video-container {
             display: none;
             position: absolute;
@@ -265,10 +281,69 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── 45 SEC AUTO HANGUP COUNTDOWN ── */
+        .countdown-wrap {
+            margin-top: 1.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .countdown-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .countdown-ring {
+            position: relative;
+            width: 72px;
+            height: 72px;
+        }
+
+        .countdown-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .countdown-ring .track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 5;
+        }
+
+        .countdown-ring .progress {
+            fill: none;
+            stroke: #FF3B30;
+            stroke-width: 5;
+            stroke-linecap: round;
+            /* stroke-dasharray set to circumference = 2*π*30 ≈ 188.5 */
+            stroke-dasharray: 188.5;
+            stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .countdown-number {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #FF3B30;
+        }
+
+        .countdown-sub {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            text-align: center;
+            max-width: 180px;
+            line-height: 1.4;
         }
 
         .controls {
@@ -298,17 +373,10 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .btn-end {
-            background: rgba(255, 59, 48, 0.8);
-        }
+        .btn-end { background: rgba(255, 59, 48, 0.8); }
+        .btn-mute.muted { background: #FF3B30; }
 
-        .btn-mute.muted {
-            background: #FF3B30;
-        }
-
-        canvas#snapshot-canvas {
-            display: none;
-        }
+        canvas#snapshot-canvas { display: none; }
 
         .status-footer {
             margin-top: 2rem;
@@ -318,8 +386,76 @@
             letter-spacing: 2px;
         }
 
-        .hidden {
-            display: none !important;
+        .hidden { display: none !important; }
+
+        /* ── CALL ENDED / NO ANSWER SCREEN ── */
+        .ended-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 40%, #1a1f3c, #0c0f20 80%);
+            z-index: 50;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .ended-overlay.show { display: flex; }
+
+        .ended-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .ended-icon.admin-ended {
+            background: rgba(255, 59, 48, 0.15);
+            border: 2px solid rgba(255, 59, 48, 0.4);
+        }
+
+        .ended-icon.no-answer {
+            background: rgba(255, 149, 0, 0.15);
+            border: 2px solid rgba(255, 149, 0, 0.4);
+        }
+
+        .ended-icon.rejected {
+            background: rgba(142, 142, 147, 0.15);
+            border: 2px solid rgba(142, 142, 147, 0.4);
+        }
+
+        .ended-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .ended-sub {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .ended-btn {
+            background: linear-gradient(135deg, #007AFF, #0055BB);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 1.2rem;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            max-width: 280px;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -337,8 +473,17 @@
     </header>
 
     <main class="container">
-        <!-- Pre-call UI -->
+
+        <!-- ── PRE-CALL UI ── -->
         <div class="glass-panel" id="preCall">
+
+            <!-- Welcome banner — shown if admin has saved this visitor's name -->
+            <div class="welcome-banner" id="welcomeBanner">
+                <div class="wb-label">👋 Welcome Back</div>
+                <div class="wb-name" id="welcomeName">--</div>
+                <div class="wb-sub">You're recognized on this device</div>
+            </div>
+
             <div class="camera-preview-container">
                 <video id="preview-video" autoplay playsinline muted></video>
             </div>
@@ -349,28 +494,106 @@
             <div class="status-footer" id="statusLabel">Initializing RTM...</div>
         </div>
 
-        <!-- In-call UI -->
+        <!-- ── IN-CALL UI ── -->
         <div class="video-container" id="videoLayout">
             <div id="remote-video"></div>
             <div id="local-video-small"></div>
 
+            <!-- Ringing overlay + 45s countdown -->
             <div class="call-overlay" id="statusOverlay">
                 <div class="status-pill" id="callStatusText">Ringing...</div>
                 <div class="loader"></div>
+
+                <!-- 45 Second Auto Hangup Countdown Ring -->
+                <div class="countdown-wrap" id="countdownWrap">
+                    <div class="countdown-label">Auto hang-up in</div>
+                    <div class="countdown-ring">
+                        <!-- Circumference = 2 * π * 30 = 188.5 -->
+                        <svg width="72" height="72" viewBox="0 0 72 72">
+                            <circle class="track" cx="36" cy="36" r="30" />
+                            <circle
+                                class="progress"
+                                id="countdownArc"
+                                cx="36" cy="36" r="30"
+                                stroke-dasharray="188.5"
+                                stroke-dashoffset="0"
+                            />
+                        </svg>
+                        <div class="countdown-number" id="countdownNumber">45</div>
+                    </div>
+                    <div class="countdown-sub">No answer? Call ends automatically.</div>
+                </div>
             </div>
 
             <div class="controls">
                 <button class="icon-btn btn-mute" id="muteBtn" onclick="toggleMute()">🎤</button>
-                <button class="icon-btn btn-end" onclick="endSession()">📞</button>
+                <button class="icon-btn btn-end" onclick="endSession('visitor')">📞</button>
             </div>
         </div>
+
+        <!-- ── ENDED / NO-ANSWER SCREEN ── -->
+        <div class="ended-overlay" id="endedOverlay">
+            <div class="ended-icon" id="endedIcon">📵</div>
+            <div class="ended-title" id="endedTitle">Call Ended</div>
+            <div class="ended-sub" id="endedSub">The resident has ended the call.<br>Thank you for visiting!</div>
+            <button class="ended-btn" onclick="location.reload()">Ring Again</button>
+        </div>
+
     </main>
 
     <canvas id="snapshot-canvas" width="128" height="128"></canvas>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const appId = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
+
+        // ═══════════════════════════════════════════════════════════════
+        //  VISITOR RECOGNITION SYSTEM
+        //  First visit → generate unique ID → save in localStorage
+        //  Every future visit (same device+browser) → reuse same ID
+        //  Admin saves name against ID → shows welcome banner on return
+        // ═══════════════════════════════════════════════════════════════
+
+        const VISITOR_ID_KEY  = 'scanbell_visitor_id';
+        const VISITOR_NAME_KEY = 'scanbell_visitor_name';
+
+        function getOrCreateVisitorId() {
+            let id = localStorage.getItem(VISITOR_ID_KEY);
+            if (!id) {
+                const ts  = Date.now().toString(36).toUpperCase();
+                const rnd = Math.random().toString(36).substr(2, 6).toUpperCase();
+                id = `SB_${ts}_${rnd}`;
+                localStorage.setItem(VISITOR_ID_KEY, id);
+                console.log('[VisitorID] Created new:', id);
+            } else {
+                console.log('[VisitorID] Returning visitor:', id);
+            }
+            return id;
+        }
+
+        function getVisitorName() {
+            return localStorage.getItem(VISITOR_NAME_KEY) || null;
+        }
+
+        function saveVisitorName(name) {
+            if (name && name.trim()) {
+                localStorage.setItem(VISITOR_NAME_KEY, name.trim());
+                console.log('[VisitorName] Saved:', name.trim());
+            }
+        }
+
+        function showWelcomeBannerIfKnown() {
+            const name = getVisitorName();
+            if (name) {
+                document.getElementById('welcomeBanner').classList.add('show');
+                document.getElementById('welcomeName').innerText = name;
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  URL PARAMS
+        // ═══════════════════════════════════════════════════════════════
+
+        const urlParams   = new URLSearchParams(window.location.search);
+        const appId       = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
 
         let houseNo = urlParams.get('houseNo');
         if (!houseNo) {
@@ -379,25 +602,89 @@
         }
 
         const channelName = `house_${houseNo}_channel`;
-        const targetId = `house_${houseNo}`;
-        const visitorId = "Visitor_" + Math.floor(Math.random() * 9999);
+        const targetId    = `house_${houseNo}`;
+
+        // Persistent visitor ID — same device = same ID every time
+        const visitorId = getOrCreateVisitorId();
 
         document.getElementById('houseNum').innerText = houseNo;
+        showWelcomeBannerIfKnown();
 
-        let rtmClient = null;
-        let rtcClient = null;
+        // ═══════════════════════════════════════════════════════════════
+        //  STATE
+        // ═══════════════════════════════════════════════════════════════
+
+        let rtmClient   = null;
+        let rtcClient   = null;
         let localTracks = { video: null, audio: null };
-        let signalTimer = null;
-        let isMuted = false;
+        let signalTimer = null;   // repeating RTM signal every 4s
+        let isMuted     = false;
         let hasAnswered = false;
+        let sessionEnded = false; // guard against double cleanup
+
+        // ── 45 SECOND AUTO HANGUP ──
+        const AUTO_HANGUP_SECONDS = 45;
+        const CIRCUMFERENCE       = 188.5; // 2 * π * 30 (SVG radius)
+        let autoHangupInterval    = null;
+        let secondsLeft           = AUTO_HANGUP_SECONDS;
+
+        // ═══════════════════════════════════════════════════════════════
+        //  COUNTDOWN FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════
+
+        function startAutoHangupCountdown() {
+            secondsLeft = AUTO_HANGUP_SECONDS;
+            updateCountdownUI(secondsLeft);
+
+            autoHangupInterval = setInterval(() => {
+                secondsLeft--;
+                updateCountdownUI(secondsLeft);
+
+                if (secondsLeft <= 0) {
+                    clearInterval(autoHangupInterval);
+                    autoHangupInterval = null;
+                    console.log('[AutoHangup] 45s no answer — ending call');
+                    handleNoAnswer();
+                }
+            }, 1000);
+        }
+
+        function stopAutoHangupCountdown() {
+            if (autoHangupInterval) {
+                clearInterval(autoHangupInterval);
+                autoHangupInterval = null;
+            }
+            // Hide countdown once call is live
+            const wrap = document.getElementById('countdownWrap');
+            if (wrap) wrap.style.display = 'none';
+        }
+
+        function updateCountdownUI(secs) {
+            document.getElementById('countdownNumber').innerText = secs;
+
+            // Arc shrinks from full circle to empty
+            const fraction = secs / AUTO_HANGUP_SECONDS;
+            const offset   = CIRCUMFERENCE * (1 - fraction);
+            document.getElementById('countdownArc').style.strokeDashoffset = offset;
+
+            // Turn orange when under 10s for urgency
+            if (secs <= 10) {
+                document.getElementById('countdownArc').style.stroke = '#FF9500';
+                document.getElementById('countdownNumber').style.color = '#FF9500';
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  INIT — Camera + RTM Login
+        // ═══════════════════════════════════════════════════════════════
 
         async function init() {
             try {
-                // 1. Camera Preview
+                // 1. Start camera preview
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 document.getElementById('preview-video').srcObject = stream;
 
-                // 2. Signaling
+                // 2. Login to Agora RTM with persistent visitor ID
                 rtmClient = AgoraRTM.createInstance(appId);
                 await rtmClient.login({ uid: visitorId });
 
@@ -406,28 +693,62 @@
                 ringBtn.disabled = false;
                 ringBtn.innerText = 'Ring Doorbell';
 
+                // ── RTM MESSAGE LISTENER ──
                 rtmClient.on('MessageFromPeer', (message) => {
-                    console.log("[RTM] From Phone:", message.text);
+                    console.log('[RTM] From admin:', message.text);
+
+                    // Admin accepted
                     if (message.text === 'CALL_ACCEPTED') {
                         hasAnswered = true;
                         clearInterval(signalTimer);
+                        stopAutoHangupCountdown(); // cancel the 45s timer
                         document.getElementById('statusOverlay').classList.add('hidden');
+                        return;
                     }
+
+                    // Admin rejected
                     if (message.text === 'CALL_REJECTED') {
-                        location.reload();
-                        alert("The resident is currently unavailable.");
+                        stopAutoHangupCountdown();
+                        cleanupAndShow('rejected');
+                        return;
+                    }
+
+                    // Admin ended call — disconnect visitor from Agora
+                    if (message.text === 'CALL_ENDED') {
+                        console.log('[RTM] CALL_ENDED received. Disconnecting visitor...');
+                        stopAutoHangupCountdown();
+                        handleAdminEndedCall();
+                        return;
+                    }
+
+                    // Admin assigned a name to this visitor
+                    try {
+                        const parsed = JSON.parse(message.text);
+                        if (parsed && parsed.event === 'NAME_ASSIGNED' && parsed.name) {
+                            saveVisitorName(parsed.name);
+                            document.getElementById('welcomeBanner').classList.add('show');
+                            document.getElementById('welcomeName').innerText = parsed.name;
+                            console.log('[RTM] Name assigned:', parsed.name);
+                        }
+                    } catch (e) {
+                        // Not JSON, already handled above
                     }
                 });
+
             } catch (e) {
-                console.error(e);
+                console.error('[Init] Error:', e);
                 updateStatus('❌ Camera Access Required');
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        //  SNAPSHOT
+        // ═══════════════════════════════════════════════════════════════
+
         function takeSnapshot() {
             const canvas = document.getElementById('snapshot-canvas');
-            const video = document.getElementById('preview-video');
-            const ctx = canvas.getContext('2d');
+            const video  = document.getElementById('preview-video');
+            const ctx    = canvas.getContext('2d');
             if (video.videoWidth > 0) {
                 ctx.drawImage(video, 0, 0, 128, 128);
                 return canvas.toDataURL('image/jpeg', 0.5);
@@ -435,64 +756,172 @@
             return null;
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        //  RING BELL
+        // ═══════════════════════════════════════════════════════════════
+
         async function ringBell() {
             const snapshot = takeSnapshot();
 
-            // UI Switch
+            // Switch to in-call view
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('videoLayout').style.display = 'block';
 
-            // Start Signaling Loop
-            const payload = JSON.stringify({ event: 'CALL_REQUEST', image: snapshot });
+            // Start the 45s auto-hangup countdown immediately
+            startAutoHangupCountdown();
+
+            // Build payload — includes persistent ID so admin can identify & name visitor
+            const visitorName = getVisitorName();
+            const payload = JSON.stringify({
+                event:        'CALL_REQUEST',
+                image:         snapshot,
+                visitor_id:    visitorId,           // persistent — same device = same ID
+                visitor_name:  visitorName || null   // pre-saved name if admin named them
+            });
+
+            // Send signal every 4s until admin answers
             const sendSignal = () => {
                 if (hasAnswered) return;
                 rtmClient.sendMessageToPeer({ text: payload }, targetId)
-                    .then(() => console.log("[RTM] Signal Sent"))
-                    .catch(e => console.error(e));
+                    .then(() => console.log('[RTM] Signal sent, ID:', visitorId))
+                    .catch(e => console.error('[RTM] Signal error:', e));
             };
 
             sendSignal();
             signalTimer = setInterval(sendSignal, 4000);
 
-            // Init RTC
+            // Init Agora RTC
             try {
                 rtcClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+
                 rtcClient.on('user-published', async (user, mediaType) => {
                     await rtcClient.subscribe(user, mediaType);
                     if (mediaType === 'video') user.videoTrack.play('remote-video');
                     if (mediaType === 'audio') user.audioTrack.play();
                 });
 
-                [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                [localTracks.audio, localTracks.video] =
+                    await AgoraRTC.createMicrophoneAndCameraTracks();
                 localTracks.video.play('local-video-small');
 
                 await rtcClient.join(appId, channelName, null, null);
                 await rtcClient.publish([localTracks.audio, localTracks.video]);
+
             } catch (e) {
-                console.error("RTC Error", e);
+                console.error('[RTC] Error:', e);
             }
         }
 
+        // ═══════════════════════════════════════════════════════════════
+        //  AGORA CLEANUP — stops all tracks and leaves channel
+        // ═══════════════════════════════════════════════════════════════
+
+        async function cleanupAgora() {
+            clearInterval(signalTimer);
+            try {
+                if (localTracks.video) { localTracks.video.close();  localTracks.video = null; }
+                if (localTracks.audio) { localTracks.audio.close();  localTracks.audio = null; }
+                if (rtcClient)         { await rtcClient.leave();    rtcClient = null; }
+            } catch (e) {
+                console.log('[Cleanup] Error:', e);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  SHOW ENDED SCREEN — generic, supports all end reasons
+        // ═══════════════════════════════════════════════════════════════
+
+        function showEndedScreen(reason) {
+            document.getElementById('videoLayout').style.display = 'none';
+            document.getElementById('preCall').classList.add('hidden');
+
+            const icon  = document.getElementById('endedIcon');
+            const title = document.getElementById('endedTitle');
+            const sub   = document.getElementById('endedSub');
+
+            if (reason === 'no-answer') {
+                icon.className  = 'ended-icon no-answer';
+                icon.innerText  = '⏰';
+                title.innerText = 'No Answer';
+                sub.innerText   = 'The resident didn\'t answer in 45 seconds.\nPlease try ringing again.';
+            } else if (reason === 'rejected') {
+                icon.className  = 'ended-icon rejected';
+                icon.innerText  = '🚫';
+                title.innerText = 'Unavailable';
+                sub.innerText   = 'The resident is currently unavailable.\nPlease try again later.';
+            } else {
+                // admin-ended
+                icon.className  = 'ended-icon admin-ended';
+                icon.innerText  = '📵';
+                title.innerText = 'Call Ended';
+                sub.innerText   = 'The resident has ended the call.\nThank you for visiting!';
+            }
+
+            document.getElementById('endedOverlay').classList.add('show');
+        }
+
+        // Convenience — cleanup then show screen
+        async function cleanupAndShow(reason) {
+            if (sessionEnded) return;
+            sessionEnded = true;
+            await cleanupAgora();
+            showEndedScreen(reason);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  ADMIN ENDED CALL — received CALL_ENDED via RTM
+        // ═══════════════════════════════════════════════════════════════
+
+        async function handleAdminEndedCall() {
+            await cleanupAndShow('admin-ended');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  NO ANSWER — 45s countdown hit zero
+        // ═══════════════════════════════════════════════════════════════
+
+        async function handleNoAnswer() {
+            await cleanupAndShow('no-answer');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  TOGGLE MUTE
+        // ═══════════════════════════════════════════════════════════════
+
         function toggleMute() {
             isMuted = !isMuted;
-            localTracks.audio.setEnabled(!isMuted);
+            if (localTracks.audio) localTracks.audio.setEnabled(!isMuted);
             const btn = document.getElementById('muteBtn');
             btn.innerText = isMuted ? '🔇' : '🎤';
             btn.classList.toggle('muted', isMuted);
         }
 
-        async function endSession() {
-            clearInterval(signalTimer);
-            if (localTracks.video) localTracks.video.close();
-            if (localTracks.audio) localTracks.audio.close();
-            if (rtcClient) await rtcClient.leave();
-            location.reload();
+        // ═══════════════════════════════════════════════════════════════
+        //  END SESSION — visitor presses hang up button
+        // ═══════════════════════════════════════════════════════════════
+
+        async function endSession(caller = 'visitor') {
+            stopAutoHangupCountdown();
+            await cleanupAndShow('visitor-ended');
+            // For visitor self-hangup we just reload
+            if (!sessionEnded) location.reload();
+            else setTimeout(() => location.reload(), 1500);
         }
 
-        function updateStatus(txt) { document.getElementById('statusLabel').innerText = txt; }
+        // ═══════════════════════════════════════════════════════════════
+        //  STATUS LABEL
+        // ═══════════════════════════════════════════════════════════════
+
+        function updateStatus(txt) {
+            document.getElementById('statusLabel').innerText = txt;
+        }
+
+        // Wire up ring button
         document.getElementById('ringBtn').onclick = ringBell;
 
+        // Start
         init();
+
     </script>
 </body>
 
