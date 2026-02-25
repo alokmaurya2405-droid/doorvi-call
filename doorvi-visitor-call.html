@@ -941,13 +941,26 @@
             btn.classList.toggle('muted', isMuted);
         }
 
-        async function endSession() {
-            if (sessionEnded) return;
-            sessionEnded = true;
-            stopAutoHangupCountdown();
-            await cleanupAgora();
-            location.reload();
+        // UPDATED VISITOR CODE (Fixed)
+async function endSession() {
+    if (sessionEnded) return;
+    sessionEnded = true;
+    stopAutoHangupCountdown();
+
+    // ── ADD THIS SIGNAL ──
+    if (rtmClient && !hasAnswered) {
+        try {
+            // Tell Admin the visitor cancelled/ended the ringing session
+            await rtmClient.sendMessageToPeer({ text: 'CALL_NO_ANSWER' }, targetId);
+            console.log('[RTM] Sent cancellation signal to Admin');
+        } catch (e) {
+            console.error('[RTM] Cancel signal failed:', e);
         }
+    }
+
+    await cleanupAgora();
+    location.reload();
+}
 
         function updateStatus(txt) { document.getElementById('statusLabel').innerText = txt; }
 
