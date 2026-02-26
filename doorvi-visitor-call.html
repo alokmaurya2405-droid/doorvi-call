@@ -116,6 +116,32 @@
         .wb-name { font-size: 1rem; font-weight: 800; color: #fff; }
         .wb-sub { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 0.15rem; }
 
+        /* Resident message banner (DND/guest/admin message) */
+        .resident-msg-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(255,149,0,0.2), rgba(255,59,48,0.18));
+            border: 1px solid rgba(255,149,0,0.45);
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .resident-msg-banner.show { display: block; }
+        .resident-msg-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 0.3rem;
+        }
+        .resident-msg-text {
+            font-size: 0.86rem;
+            color: rgba(255,255,255,0.95);
+            line-height: 1.45;
+            font-weight: 600;
+        }
+
         /* ── CAMERA PREVIEW ── */
         .camera-preview-container {
             width: clamp(100px, 28vw, 140px);
@@ -404,6 +430,72 @@
         }
 
         /* ── RESPONSIVE BREAKPOINTS ── */
+        /* DND pre-call confirmation modal */
+        .dnd-prompt-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 350;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem;
+        }
+        .dnd-prompt-overlay.show { display: flex; }
+        .dnd-prompt-card {
+            width: 100%;
+            max-width: 420px;
+            background: rgba(20, 28, 48, 0.96);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 1.2rem;
+            padding: 1.1rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+        }
+        .dnd-prompt-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 0.4rem;
+        }
+        .dnd-prompt-sub {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.62);
+            margin-bottom: 0.8rem;
+        }
+        .dnd-prompt-msg {
+            font-size: 0.88rem;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.95);
+            background: rgba(255,149,0,0.12);
+            border: 1px solid rgba(255,149,0,0.35);
+            border-radius: 0.8rem;
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 1rem;
+        }
+        .dnd-prompt-actions {
+            display: flex;
+            gap: 0.6rem;
+        }
+        .dnd-btn {
+            flex: 1;
+            border: none;
+            border-radius: 0.8rem;
+            padding: 0.72rem 0.9rem;
+            font-size: 0.86rem;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .dnd-btn.ok {
+            background: linear-gradient(135deg, #007AFF, #0055BB);
+            color: #fff;
+        }
+        .dnd-btn.back {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: rgba(255,255,255,0.92);
+        }
+
         @media (max-width: 380px) {
             .quick-chip { padding: 0.4rem 0.7rem; font-size: 0.68rem; }
             .glass-panel { padding: 1.2rem 1rem; }
@@ -444,6 +536,11 @@
                 <div class="wb-label">👋 Welcome Back</div>
                 <div class="wb-name" id="welcomeName">--</div>
                 <div class="wb-sub">You're recognized on this device</div>
+            </div>
+
+            <div class="resident-msg-banner" id="residentMsgBanner">
+                <div class="resident-msg-title" id="residentMsgTitle">Resident Message</div>
+                <div class="resident-msg-text" id="residentMsgText">--</div>
             </div>
 
             <div class="camera-preview-container">
@@ -540,6 +637,18 @@
         <button class="ended-btn" onclick="location.reload()">Ring Again</button>
     </div>
 
+    <div class="dnd-prompt-overlay" id="dndPromptOverlay">
+        <div class="dnd-prompt-card">
+            <div class="dnd-prompt-title">Resident is in DND/Silent mode</div>
+            <div class="dnd-prompt-sub">They may not pick the call right now.</div>
+            <div class="dnd-prompt-msg" id="dndPromptMsg">Please try later.</div>
+            <div class="dnd-prompt-actions">
+                <button class="dnd-btn ok" onclick="acknowledgeDndAndContinue()">OK, Continue</button>
+                <button class="dnd-btn back" onclick="goBackFromDnd()">Go Back</button>
+            </div>
+        </div>
+    </div>
+
     <canvas id="snapshot-canvas" width="128" height="128"></canvas>
 
     <script>
@@ -607,6 +716,7 @@
         let hasAnswered = false;
         let sessionEnded = false;
         let rtmReady    = false; // true once RTM is logged in
+        let dndPromptPending = false;
 
         const AUTO_HANGUP_SECONDS = 45;
         const CIRCUMFERENCE       = 188.5;
@@ -769,6 +879,13 @@
                 ringBtn.innerText = 'Ring Doorbell';
                 updateSendBtnState(); // enable send button now RTM is ready
 
+                // Ask resident app for current DND status/reason on QR open.
+                try {
+                    await rtmClient.sendMessageToPeer({ text: 'DND_STATUS_REQUEST' }, targetId);
+                } catch (e) {
+                    console.log('[RTM] DND status request failed:', e);
+                }
+
                 rtmClient.on('MessageFromPeer', (message) => {
                     console.log('[RTM] From admin:', message.text);
 
@@ -790,7 +907,22 @@
                         return;
                     }
                     if (message.text.startsWith('QUICK_REPLY:')) {
-                        showAdminReplyToast(message.text.replace('QUICK_REPLY:', ''));
+                        const quickText = message.text.replace('QUICK_REPLY:', '').trim();
+                        showResidentMessage(quickText, 'DND Message');
+                        if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
+                            showDndPrompt(quickText);
+                        } else {
+                            showAdminReplyToast(quickText);
+                        }
+                        return;
+                    }
+                    if (message.text.startsWith('ADMIN_MESSAGE:')) {
+                        const adminMessage = message.text.replace('ADMIN_MESSAGE:', '').trim();
+                        showResidentMessage(adminMessage, 'Resident Message');
+                        if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
+                            return;
+                        }
+                        showAdminReplyToast(adminMessage);
                         return;
                     }
                     try {
@@ -828,6 +960,40 @@
         //  SNAPSHOT
         // ═══════════════════════════════════════════════
 
+        function showResidentMessage(text, title = 'Resident Message') {
+            const safeText = (text || '').trim();
+            if (!safeText) return;
+            const banner = document.getElementById('residentMsgBanner');
+            const titleEl = document.getElementById('residentMsgTitle');
+            const textEl = document.getElementById('residentMsgText');
+            if (!banner || !titleEl || !textEl) return;
+            titleEl.innerText = title;
+            textEl.innerText = safeText;
+            banner.classList.add('show');
+        }
+
+        function showDndPrompt(text) {
+            const safeText = (text || '').trim();
+            if (!safeText) return;
+            dndPromptPending = true;
+            document.getElementById('dndPromptMsg').innerText = safeText;
+            document.getElementById('dndPromptOverlay').classList.add('show');
+        }
+
+        function acknowledgeDndAndContinue() {
+            dndPromptPending = false;
+            document.getElementById('dndPromptOverlay').classList.remove('show');
+        }
+
+        function goBackFromDnd() {
+            dndPromptPending = false;
+            document.getElementById('dndPromptOverlay').classList.remove('show');
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.reload();
+            }
+        }
         function takeSnapshot() {
             const canvas = document.getElementById('snapshot-canvas');
             const video  = document.getElementById('preview-video');
@@ -841,6 +1007,7 @@
         // ═══════════════════════════════════════════════
 
         async function ringBell() {
+            if (dndPromptPending) return;
             const snapshot = takeSnapshot();
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('messagePanel').classList.add('hidden');
@@ -969,3 +1136,4 @@ async function endSession() {
     </script>
 </body>
 </html>
+
