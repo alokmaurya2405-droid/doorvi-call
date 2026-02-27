@@ -717,6 +717,9 @@
         let sessionEnded = false;
         let rtmReady    = false; // true once RTM is logged in
         let dndPromptPending = false;
+        
+        // ── FIX: Global preview stream variable ──
+        let previewStream = null;
 
         const AUTO_HANGUP_SECONDS = 45;
         const CIRCUMFERENCE       = 188.5;
@@ -865,8 +868,9 @@
         async function init() {
             try {
                 // Camera preview
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('preview-video').srcObject = stream;
+                // ── FIX: Store stream globally to stop it later ──
+                previewStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('preview-video').srcObject = previewStream;
 
                 // RTM login
                 rtmClient = AgoraRTM.createInstance(appId);
@@ -1008,6 +1012,17 @@
 
         async function ringBell() {
             if (dndPromptPending) return;
+            
+            // ─── IOS FIX: STOP PREVIEW STREAM BEFORE AGORA INIT ───
+            // iOS allows only one active camera stream.
+            // We must stop the preview stream to release the camera hardware lock.
+            if (previewStream) {
+                previewStream.getTracks().forEach(track => track.stop());
+                previewStream = null;
+                document.getElementById('preview-video').srcObject = null;
+            }
+            // ──────────────────────────────────────────────────────
+
             const snapshot = takeSnapshot();
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('messagePanel').classList.add('hidden');
@@ -1108,26 +1123,25 @@
             btn.classList.toggle('muted', isMuted);
         }
 
-        // UPDATED VISITOR CODE (Fixed)
-async function endSession() {
-    if (sessionEnded) return;
-    sessionEnded = true;
-    stopAutoHangupCountdown();
+        async function endSession() {
+            if (sessionEnded) return;
+            sessionEnded = true;
+            stopAutoHangupCountdown();
 
-    // ── ADD THIS SIGNAL ──
-    if (rtmClient && !hasAnswered) {
-        try {
-            // Tell Admin the visitor cancelled/ended the ringing session
-            await rtmClient.sendMessageToPeer({ text: 'CALL_NO_ANSWER' }, targetId);
-            console.log('[RTM] Sent cancellation signal to Admin');
-        } catch (e) {
-            console.error('[RTM] Cancel signal failed:', e);
+            // ── ADD THIS SIGNAL ──
+            if (rtmClient && !hasAnswered) {
+                try {
+                    // Tell Admin the visitor cancelled/ended the ringing session
+                    await rtmClient.sendMessageToPeer({ text: 'CALL_NO_ANSWER' }, targetId);
+                    console.log('[RTM] Sent cancellation signal to Admin');
+                } catch (e) {
+                    console.error('[RTM] Cancel signal failed:', e);
+                }
+            }
+
+            await cleanupAgora();
+            location.reload();
         }
-    }
-
-    await cleanupAgora();
-    location.reload();
-}
 
         function updateStatus(txt) { document.getElementById('statusLabel').innerText = txt; }
 
@@ -1136,4 +1150,3 @@ async function endSession() {
     </script>
 </body>
 </html>
-
