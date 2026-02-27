@@ -1109,26 +1109,31 @@
         }
 
         // UPDATED VISITOR CODE (Fixed)
-async function endSession() {
-    if (sessionEnded) return;
-    sessionEnded = true;
-    stopAutoHangupCountdown();
+        async function endSession() {
+            if (sessionEnded) return;
+            sessionEnded = true;
+            stopAutoHangupCountdown();
 
-    // ── ADD THIS SIGNAL ──
-    if (rtmClient && !hasAnswered) {
-        try {
-            // Tell Admin the visitor cancelled/ended the ringing session
-            await rtmClient.sendMessageToPeer({ text: 'CALL_NO_ANSWER' }, targetId);
-            console.log('[RTM] Sent cancellation signal to Admin');
-        } catch (e) {
-            console.error('[RTM] Cancel signal failed:', e);
+            // ── FIX: Send correct signal based on call state ──
+            if (rtmClient) {
+                try {
+                    if (hasAnswered) {
+                        // If call was active, tell Admin the visitor ended it
+                        await rtmClient.sendMessageToPeer({ text: 'CALL_ENDED' }, targetId);
+                        console.log('[RTM] Sent CALL_ENDED to Admin');
+                    } else {
+                        // If call was ringing, tell Admin no answer/cancelled
+                        await rtmClient.sendMessageToPeer({ text: 'CALL_NO_ANSWER' }, targetId);
+                        console.log('[RTM] Sent CALL_NO_ANSWER to Admin');
+                    }
+                } catch (e) {
+                    console.error('[RTM] Signal failed:', e);
+                }
+            }
+
+            await cleanupAgora();
+            location.reload();
         }
-    }
-
-    await cleanupAgora();
-    location.reload();
-}
-
         function updateStatus(txt) { document.getElementById('statusLabel').innerText = txt; }
 
         document.getElementById('ringBtn').onclick = ringBell;
