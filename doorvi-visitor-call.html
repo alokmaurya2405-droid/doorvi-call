@@ -1162,6 +1162,9 @@
             houseNo = channel.split('_')[1] || '32';
         }
 
+        const callType = urlParams.get('callType') || 'video';
+        const isAudioOnly = callType === 'audio';
+
         const channelName = `house_${houseNo}_channel`;
         const targetId = `house_${houseNo}`;
         const visitorId = getOrCreateVisitorId();
@@ -1315,8 +1318,13 @@
 
         async function init() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('preview-video').srcObject = stream;
+                if (!isAudioOnly) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    document.getElementById('preview-video').srcObject = stream;
+                } else {
+                    document.querySelector('.camera-preview-container').style.display = 'none';
+                    document.querySelector('.sub-message').innerHTML = 'Audio-only call is enabled for this resident.<br>Tap Ring Doorbell to connect.';
+                }
 
                 rtmClient = AgoraRTM.createInstance(appId);
                 await rtmClient.login({ uid: visitorId });
@@ -1385,7 +1393,7 @@
 
             } catch (e) {
                 console.error('[Init] Error:', e);
-                updateStatus('❌ Camera Required');
+                updateStatus(isAudioOnly ? '❌ Microphone Required' : '❌ Camera Required');
             }
         }
 
@@ -1466,7 +1474,8 @@
             const visitorName = getVisitorName();
             const payload = JSON.stringify({
                 event: 'CALL_REQUEST', image: snapshot,
-                visitor_id: visitorId, visitor_name: visitorName || null
+                visitor_id: visitorId, visitor_name: visitorName || null,
+                call_type: callType
             });
 
             const sendSignal = () => {
@@ -1482,13 +1491,22 @@
                 rtcClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
                 rtcClient.on('user-published', async (user, mediaType) => {
                     await rtcClient.subscribe(user, mediaType);
-                    if (mediaType === 'video') user.videoTrack.play('remote-video');
+                    if (mediaType === 'video' && !isAudioOnly) user.videoTrack.play('remote-video');
                     if (mediaType === 'audio') user.audioTrack.play();
                 });
-                [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
-                localTracks.video.play('local-video-small');
-                await rtcClient.join(appId, channelName, null, null);
-                await rtcClient.publish([localTracks.audio, localTracks.video]);
+
+                if (isAudioOnly) {
+                    localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
+                    await rtcClient.join(appId, channelName, null, null);
+                    await rtcClient.publish([localTracks.audio]);
+                    document.getElementById('local-video-small').style.display = 'none';
+                    document.getElementById('remote-video').style.background = '#0F172A'; // Dark background for audio
+                } else {
+                    [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                    localTracks.video.play('local-video-small');
+                    await rtcClient.join(appId, channelName, null, null);
+                    await rtcClient.publish([localTracks.audio, localTracks.video]);
+                }
             } catch (e) { console.error('[RTC]', e); }
         }
 
