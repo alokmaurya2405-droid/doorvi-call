@@ -291,30 +291,6 @@
             font-weight: 600;
         }
 
-        /* Stop voice button */
-        .stop-voice-btn {
-            display: none;
-            align-items: center;
-            gap: 0.4rem;
-            margin-top: 0.6rem;
-            background: rgba(255, 69, 58, 0.15);
-            border: 1px solid rgba(255, 69, 58, 0.3);
-            border-radius: 50px;
-            padding: 0.35rem 0.8rem;
-            color: #FF453A;
-            font-size: 0.68rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .stop-voice-btn:hover {
-            background: rgba(255, 69, 58, 0.25);
-            transform: translateY(-1px);
-        }
-
         /* ══════════════════════════════════════════
            CAMERA PREVIEW — Animated Ring
         ══════════════════════════════════════════ */
@@ -1037,9 +1013,6 @@
             <div class="resident-msg-banner" id="residentMsgBanner">
                 <div class="resident-msg-title" id="residentMsgTitle">Resident Message</div>
                 <div class="resident-msg-text" id="residentMsgText">--</div>
-                <button id="stopSpeechBtn" class="stop-voice-btn" onclick="stopSpeech()">
-                    <span>🛑</span> Stop Voice
-                </button>
             </div>
 
             <div class="camera-preview-container">
@@ -1397,18 +1370,15 @@
                         } else {
                             showAdminReplyToast(quickText);
                         }
-                        speakText(quickText);
                         return;
                     }
                     if (message.text.startsWith('ADMIN_MESSAGE:')) {
                         const adminMessage = message.text.replace('ADMIN_MESSAGE:', '').trim();
                         showResidentMessage(adminMessage, 'Resident Message');
                         if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
-                            speakText(adminMessage);
                             return;
                         }
                         showAdminReplyToast(adminMessage);
-                        speakText(adminMessage);
                         return;
                     }
                     try {
@@ -1440,54 +1410,6 @@
             toast.innerText = `💬 ${text}`;
             document.body.appendChild(toast);
             setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
-        }
-
-        // ═══════════════════════════════════════════════
-        //  TEXT TO SPEECH
-        // ═══════════════════════════════════════════════
-
-        let speechUtterance = null;
-
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                // Cancel any ongoing speech
-                window.speechSynthesis.cancel();
-
-                // Clean text for better speech (remove emojis or specific patterns if any)
-                const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-
-                speechUtterance = new SpeechSynthesisUtterance(cleanText);
-                speechUtterance.rate = 0.9;
-                speechUtterance.pitch = 1.0;
-                speechUtterance.volume = 1.0;
-
-                const stopBtn = document.getElementById('stopSpeechBtn');
-
-                speechUtterance.onstart = () => {
-                    if (stopBtn) stopBtn.style.display = 'inline-flex';
-                };
-
-                speechUtterance.onend = () => {
-                    if (stopBtn) stopBtn.style.display = 'none';
-                    speechUtterance = null;
-                };
-
-                speechUtterance.onerror = () => {
-                    if (stopBtn) stopBtn.style.display = 'none';
-                    speechUtterance = null;
-                };
-
-                window.speechSynthesis.speak(speechUtterance);
-            }
-        }
-
-        function stopSpeech() {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const stopBtn = document.getElementById('stopSpeechBtn');
-                if (stopBtn) stopBtn.style.display = 'none';
-                speechUtterance = null;
-            }
         }
 
         // ═══════════════════════════════════════════════
@@ -1531,20 +1453,9 @@
         function takeSnapshot() {
             const canvas = document.getElementById('snapshot-canvas');
             const video = document.getElementById('preview-video');
-            if (!canvas || !video) return null;
-            if (video.readyState < 2 || video.videoWidth <= 0 || video.videoHeight <= 0) return null;
-
             const ctx = canvas.getContext('2d');
-            if (!ctx) return null;
-
-            // Mirror snapshot to match what visitor sees in the circular preview.
-            ctx.save();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.translate(canvas.width, 0);
-            ctx.scale(-1, 1);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
-            return canvas.toDataURL('image/jpeg', 0.5);
+            if (video.videoWidth > 0) { ctx.drawImage(video, 0, 0, 128, 128); return canvas.toDataURL('image/jpeg', 0.5); }
+            return null;
         }
 
         // ═══════════════════════════════════════════════
@@ -1553,7 +1464,7 @@
 
         async function ringBell() {
             if (dndPromptPending) return;
-            let snapshot = takeSnapshot();
+            const snapshot = takeSnapshot();
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('messagePanel').classList.add('hidden');
             document.getElementById('videoLayout').style.display = 'block';
@@ -1561,15 +1472,14 @@
             startAutoHangupCountdown();
 
             const visitorName = getVisitorName();
+            const payload = JSON.stringify({
+                event: 'CALL_REQUEST', image: snapshot,
+                visitor_id: visitorId, visitor_name: visitorName || null,
+                call_type: callType
+            });
+
             const sendSignal = () => {
                 if (hasAnswered) return;
-                // Retry capture while ringing so we still attach an image if camera became ready late.
-                if (!snapshot) snapshot = takeSnapshot();
-                const payload = JSON.stringify({
-                    event: 'CALL_REQUEST', image: snapshot,
-                    visitor_id: visitorId, visitor_name: visitorName || null,
-                    call_type: callType
-                });
                 rtmClient.sendMessageToPeer({ text: payload }, targetId)
                     .then(() => console.log('[RTM] Signal sent'))
                     .catch(e => console.error(e));
