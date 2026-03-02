@@ -1531,9 +1531,20 @@
         function takeSnapshot() {
             const canvas = document.getElementById('snapshot-canvas');
             const video = document.getElementById('preview-video');
+            if (!canvas || !video) return null;
+            if (video.readyState < 2 || video.videoWidth <= 0 || video.videoHeight <= 0) return null;
+
             const ctx = canvas.getContext('2d');
-            if (video.videoWidth > 0) { ctx.drawImage(video, 0, 0, 128, 128); return canvas.toDataURL('image/jpeg', 0.5); }
-            return null;
+            if (!ctx) return null;
+
+            // Mirror snapshot to match what visitor sees in the circular preview.
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+            return canvas.toDataURL('image/jpeg', 0.5);
         }
 
         // ═══════════════════════════════════════════════
@@ -1542,7 +1553,7 @@
 
         async function ringBell() {
             if (dndPromptPending) return;
-            const snapshot = takeSnapshot();
+            let snapshot = takeSnapshot();
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('messagePanel').classList.add('hidden');
             document.getElementById('videoLayout').style.display = 'block';
@@ -1550,14 +1561,15 @@
             startAutoHangupCountdown();
 
             const visitorName = getVisitorName();
-            const payload = JSON.stringify({
-                event: 'CALL_REQUEST', image: snapshot,
-                visitor_id: visitorId, visitor_name: visitorName || null,
-                call_type: callType
-            });
-
             const sendSignal = () => {
                 if (hasAnswered) return;
+                // Retry capture while ringing so we still attach an image if camera became ready late.
+                if (!snapshot) snapshot = takeSnapshot();
+                const payload = JSON.stringify({
+                    event: 'CALL_REQUEST', image: snapshot,
+                    visitor_id: visitorId, visitor_name: visitorName || null,
+                    call_type: callType
+                });
                 rtmClient.sendMessageToPeer({ text: payload }, targetId)
                     .then(() => console.log('[RTM] Signal sent'))
                     .catch(e => console.error(e));
