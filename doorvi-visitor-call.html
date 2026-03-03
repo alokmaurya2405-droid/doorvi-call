@@ -317,6 +317,93 @@
             transform: translateY(-1px);
         }
 
+        /* TTS Status Indicator */
+        .tts-status-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 132, 255, 0.95);
+            color: white;
+            padding: 1.2rem 1.8rem;
+            border-radius: 1.2rem;
+            z-index: 400;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(10, 132, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            max-width: 90vw;
+        }
+
+        .tts-status-indicator.show {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .tts-status-text {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.2rem;
+        }
+
+        .tts-status-message {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        .tts-status-controls {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 0.6rem;
+        }
+
+        .tts-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.6rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .tts-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .tts-btn.stop {
+            background: rgba(255, 69, 58, 0.3);
+            border-color: rgba(255, 69, 58, 0.5);
+        }
+
+        .tts-btn.stop:hover {
+            background: rgba(255, 69, 58, 0.4);
+        }
+
+        .tts-loading-dots {
+            display: inline-block;
+            width: 1.2rem;
+            height: 0.3rem;
+            background: linear-gradient(90deg, #fff 33%, rgba(255, 255, 255, 0.5) 66%, transparent 100%);
+            background-size: 0.4rem 100%;
+            animation: loading 1s ease-in-out infinite;
+        }
+
+        @keyframes loading {
+            0%, 100% { background-position: -0.4rem 0; }
+            50% { background-position: 0.4rem 0; }
+        }
+
         /* ══════════════════════════════════════════
            CAMERA PREVIEW — Animated Ring
         ══════════════════════════════════════════ */
@@ -1157,13 +1244,25 @@
 
     <canvas id="snapshot-canvas" width="128" height="128"></canvas>
 
+    <!-- ── TTS Status Indicator ── -->
+    <div class="tts-status-indicator" id="ttsStatusIndicator">
+        <div class="tts-status-text" id="ttsStatusTitle">🔊 Playing Message</div>
+        <div class="tts-status-message" id="ttsStatusMessage">The resident is saying something...</div>
+        <div class="tts-status-controls">
+            <button class="tts-btn stop" onclick="stopTTS()">🛑 Stop</button>
+            <button class="tts-btn" onclick="closeTTSIndicator()">✓ OK</button>
+        </div>
+    </div>
+
     <script>
         // ═══════════════════════════════════════════════════════════
-        //  IMPROVED TEXT-TO-SPEECH (iOS Compatible)
+        //  ENHANCED TEXT-TO-SPEECH (iOS Compatible + UI Controls)
         // ═══════════════════════════════════════════════════════════
 
         let speechUtterance = null;
         let audioContext = null;
+        let isSpeaking = false;
+        let currentSpeechType = null;  // 'admin' | 'dnd' | 'quick-reply'
 
         function initAudioContext() {
             if (!audioContext) {
@@ -1175,20 +1274,34 @@
             }
         }
 
-        function speakText(text) {
+        function showTTSIndicator(title, message, type = 'admin') {
+            currentSpeechType = type;
+            const indicator = document.getElementById('ttsStatusIndicator');
+            document.getElementById('ttsStatusTitle').innerText = title;
+            document.getElementById('ttsStatusMessage').innerText = message;
+            indicator.classList.add('show');
+        }
+
+        function closeTTSIndicator() {
+            const indicator = document.getElementById('ttsStatusIndicator');
+            indicator.classList.remove('show');
+        }
+
+        function speakText(text, type = 'admin', showIndicator = true) {
             if (!text || !text.trim()) {
                 console.log('[TTS] Empty text, skipping');
                 return;
             }
 
             try {
-                // Initialize audio context for iOS
+                // ✅ 1. Initialize audio context for iOS
                 initAudioContext();
 
-                // Cancel any ongoing speech
+                // ✅ 2. Cancel any ongoing speech
                 window.speechSynthesis.cancel();
+                isSpeaking = false;
 
-                // Clean text for better speech
+                // ✅ 3. Clean text for better speech
                 const cleanText = text
                     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
                     .trim();
@@ -1198,65 +1311,87 @@
                     return;
                 }
 
-                // Create utterance
+                // ✅ 4. Show TTS indicator if requested
+                if (showIndicator) {
+                    let title = '🔊 Resident Message';
+                    if (type === 'dnd') {
+                        title = '🔇 DND Auto-Reply';
+                    } else if (type === 'quick-reply') {
+                        title = '💬 Quick Message';
+                    }
+                    showTTSIndicator(title, cleanText, type);
+                }
+
+                // ✅ 5. Create utterance with iOS-friendly settings
                 speechUtterance = new SpeechSynthesisUtterance(cleanText);
                 
-                // Optimize for iOS and all devices
                 speechUtterance.rate = 0.9;          // Slightly slower for clarity
                 speechUtterance.pitch = 1.0;
                 speechUtterance.volume = 1.0;
-                speechUtterance.lang = 'en-US';      // Explicit language
+                speechUtterance.lang = 'en-US';      // Explicit language for iOS
                 
                 const stopBtn = document.getElementById('stopSpeechBtn');
 
+                // ✅ 6. Event handlers with logging
                 speechUtterance.onstart = () => {
-                    console.log('[TTS] Speech started');
+                    isSpeaking = true;
+                    console.log('[TTS] Speech started:', type);
                     if (stopBtn) stopBtn.style.display = 'inline-flex';
                 };
 
                 speechUtterance.onend = () => {
-                    console.log('[TTS] Speech ended');
+                    isSpeaking = false;
+                    console.log('[TTS] Speech ended:', type);
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
+                    // Don't auto-close indicator, let user click OK
                 };
 
                 speechUtterance.onerror = (event) => {
+                    isSpeaking = false;
                     console.error('[TTS] Error:', event.error);
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
                 };
 
                 speechUtterance.onpause = () => {
-                    console.log('[TTS] Speech paused');
+                    console.log('[TTS] Speech paused:', type);
                 };
 
                 speechUtterance.onresume = () => {
-                    console.log('[TTS] Speech resumed');
+                    console.log('[TTS] Speech resumed:', type);
                 };
 
-                // Speak!
-                console.log('[TTS] Speaking:', cleanText);
+                // ✅ 7. Speak!
+                console.log('[TTS] Speaking:', type, '|', cleanText);
                 window.speechSynthesis.speak(speechUtterance);
 
             } catch (error) {
                 console.error('[TTS] Error:', error);
+                isSpeaking = false;
                 const stopBtn = document.getElementById('stopSpeechBtn');
                 if (stopBtn) stopBtn.style.display = 'none';
             }
         }
 
-        function stopSpeech() {
+        function stopTTS() {
             try {
                 console.log('[TTS] Stop requested');
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
+                    isSpeaking = false;
                     const stopBtn = document.getElementById('stopSpeechBtn');
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
+                    closeTTSIndicator();
                 }
             } catch (error) {
                 console.error('[TTS] Stop error:', error);
             }
+        }
+
+        function stopSpeech() {
+            stopTTS();  // Same function
         }
 
         // Force iOS to initialize audio context on user interaction
@@ -1517,21 +1652,28 @@
                         } else {
                             showAdminReplyToast(quickText);
                         }
-                        // TTS with delay for iOS
-                        setTimeout(() => speakText(quickText), 100);
+                        // ✅ Enhanced TTS with delay and type tracking
+                        setTimeout(() => speakText(quickText, 'quick-reply', true), 100);
                         return;
                     }
                     if (message.text.startsWith('ADMIN_MESSAGE:')) {
                         const adminMessage = message.text.replace('ADMIN_MESSAGE:', '').trim();
                         showResidentMessage(adminMessage, 'Resident Message');
                         if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
-                            // TTS with delay for iOS
-                            setTimeout(() => speakText(adminMessage), 100);
+                            // ✅ Enhanced TTS with delay and type tracking
+                            setTimeout(() => speakText(adminMessage, 'admin', true), 100);
                             return;
                         }
                         showAdminReplyToast(adminMessage);
-                        // TTS with delay for iOS
-                        setTimeout(() => speakText(adminMessage), 100);
+                        // ✅ Enhanced TTS with delay and type tracking
+                        setTimeout(() => speakText(adminMessage, 'admin', true), 100);
+                        return;
+                    }
+                    if (message.text.startsWith('DND_AUTO_REPLY:')) {
+                        const dndMessage = message.text.replace('DND_AUTO_REPLY:', '').trim();
+                        showResidentMessage(dndMessage, 'Resident is in DND Mode');
+                        // ✅ Enhanced TTS for DND with type tracking
+                        setTimeout(() => speakText(dndMessage, 'dnd', true), 100);
                         return;
                     }
                     try {
