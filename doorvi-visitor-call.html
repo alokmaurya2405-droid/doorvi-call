@@ -1801,20 +1801,31 @@
                     if (mediaType === 'audio') user.audioTrack.play();
                 });
 
-                if (isAudioOnly) {
-                    localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
-                    await rtcClient.join(appId, channelName, null, null);
-                    await rtcClient.publish([localTracks.audio]);
-                    document.getElementById('local-video-small').style.display = 'none';
-                    document.getElementById('remote-video').style.background = '#0F172A';
-                } else {
-                    [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
-                    localTracks.video.play('local-video-small');
-                    await rtcClient.join(appId, channelName, null, null);
-                    await rtcClient.publish([localTracks.audio, localTracks.video]);
-                }
-            } catch (e) { console.error('[RTC]', e); }
-        }
+                if (!isAudioOnly) {
+    // ── FIX: Force FRONT camera on ALL phones ──
+    const constraints = {
+        video: {
+            facingMode: 'user',  // 'user' = front, 'environment' = back
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+        },
+        audio: false
+    };
+    
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        document.getElementById('preview-video').srcObject = stream;
+        console.log('[Camera] Front camera initialized successfully');
+    } catch (e) {
+        // Fallback for older browsers
+        console.warn('[Camera] facingMode not supported, trying fallback:', e);
+        const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
+            video: true, 
+            audio: false 
+        });
+        document.getElementById('preview-video').srcObject = fallbackStream;
+    }
+}
 
         // ═══════════════════════════════════════════════════════════
         //  CLEANUP
