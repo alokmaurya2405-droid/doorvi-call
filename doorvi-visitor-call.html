@@ -308,6 +308,8 @@
             transition: all 0.2s;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .stop-voice-btn:hover {
@@ -387,6 +389,8 @@
             letter-spacing: 0.8px;
             position: relative;
             overflow: hidden;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .ring-btn::after {
@@ -480,6 +484,8 @@
             cursor: pointer;
             transition: all 0.25s;
             white-space: nowrap;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .quick-chip:hover,
@@ -560,6 +566,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.4rem;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .send-msg-btn:hover,
@@ -753,6 +761,8 @@
             justify-content: center;
             transition: 0.2s;
             border: 1px solid rgba(255, 255, 255, 0.08);
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .btn-end {
@@ -881,6 +891,8 @@
             width: 100%;
             max-width: 260px;
             box-shadow: 0 8px 20px rgba(10, 132, 255, 0.3);
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         /* ══════════════════════════════════════════
@@ -949,6 +961,8 @@
             font-size: 0.84rem;
             font-weight: 800;
             cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .dnd-btn.ok {
@@ -1144,9 +1158,119 @@
     <canvas id="snapshot-canvas" width="128" height="128"></canvas>
 
     <script>
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        //  IMPROVED TEXT-TO-SPEECH (iOS Compatible)
+        // ═══════════════════════════════════════════════════════════
+
+        let speechUtterance = null;
+        let audioContext = null;
+
+        function initAudioContext() {
+            if (!audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+            }
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+        }
+
+        function speakText(text) {
+            if (!text || !text.trim()) {
+                console.log('[TTS] Empty text, skipping');
+                return;
+            }
+
+            try {
+                // Initialize audio context for iOS
+                initAudioContext();
+
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                // Clean text for better speech
+                const cleanText = text
+                    .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
+                    .trim();
+
+                if (!cleanText) {
+                    console.log('[TTS] Text is empty after cleaning');
+                    return;
+                }
+
+                // Create utterance
+                speechUtterance = new SpeechSynthesisUtterance(cleanText);
+                
+                // Optimize for iOS and all devices
+                speechUtterance.rate = 0.9;          // Slightly slower for clarity
+                speechUtterance.pitch = 1.0;
+                speechUtterance.volume = 1.0;
+                speechUtterance.lang = 'en-US';      // Explicit language
+                
+                const stopBtn = document.getElementById('stopSpeechBtn');
+
+                speechUtterance.onstart = () => {
+                    console.log('[TTS] Speech started');
+                    if (stopBtn) stopBtn.style.display = 'inline-flex';
+                };
+
+                speechUtterance.onend = () => {
+                    console.log('[TTS] Speech ended');
+                    if (stopBtn) stopBtn.style.display = 'none';
+                    speechUtterance = null;
+                };
+
+                speechUtterance.onerror = (event) => {
+                    console.error('[TTS] Error:', event.error);
+                    if (stopBtn) stopBtn.style.display = 'none';
+                    speechUtterance = null;
+                };
+
+                speechUtterance.onpause = () => {
+                    console.log('[TTS] Speech paused');
+                };
+
+                speechUtterance.onresume = () => {
+                    console.log('[TTS] Speech resumed');
+                };
+
+                // Speak!
+                console.log('[TTS] Speaking:', cleanText);
+                window.speechSynthesis.speak(speechUtterance);
+
+            } catch (error) {
+                console.error('[TTS] Error:', error);
+                const stopBtn = document.getElementById('stopSpeechBtn');
+                if (stopBtn) stopBtn.style.display = 'none';
+            }
+        }
+
+        function stopSpeech() {
+            try {
+                console.log('[TTS] Stop requested');
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const stopBtn = document.getElementById('stopSpeechBtn');
+                    if (stopBtn) stopBtn.style.display = 'none';
+                    speechUtterance = null;
+                }
+            } catch (error) {
+                console.error('[TTS] Stop error:', error);
+            }
+        }
+
+        // Force iOS to initialize audio context on user interaction
+        document.addEventListener('touchstart', () => {
+            initAudioContext();
+        }, { once: true });
+
+        document.addEventListener('click', () => {
+            initAudioContext();
+        }, { once: true });
+
+        // ═══════════════════════════════════════════════════════════
         //  VISITOR RECOGNITION
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         const VISITOR_ID_KEY = 'scanbell_visitor_id';
         const VISITOR_NAME_KEY = 'scanbell_visitor_name';
@@ -1176,9 +1300,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  URL PARAMS
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         const urlParams = new URLSearchParams(window.location.search);
         const appId = urlParams.get('appid') || '469ff9909237486f8e9bf8526e09899c';
@@ -1199,9 +1323,9 @@
         document.getElementById('houseNum').innerText = houseNo;
         showWelcomeBannerIfKnown();
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  STATE
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         let rtmClient = null;
         let rtcClient = null;
@@ -1220,9 +1344,9 @@
 
         let selectedQuickMsg = '';
 
-        // ═══════════════════════════════════════════════
-        //  MESSAGING — Quick chip selection
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        //  MESSAGING
+        // ═══════════════════════════════════════════════════════════
 
         function selectQuickMsg(el, text) {
             document.querySelectorAll('.quick-chip').forEach(c => c.classList.remove('selected'));
@@ -1259,10 +1383,6 @@
             const btn = document.getElementById('sendMsgBtn');
             btn.disabled = !hasContent || !rtmReady;
         }
-
-        // ═══════════════════════════════════════════════
-        //  SEND VISITOR NOTE TO ADMIN
-        // ═══════════════════════════════════════════════
 
         async function sendVisitorNote() {
             const customText = document.getElementById('customMsgInput').value.trim();
@@ -1305,9 +1425,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  COUNTDOWN
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         function startAutoHangupCountdown() {
             secondsLeft = AUTO_HANGUP_SECONDS;
@@ -1339,9 +1459,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  INIT
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         async function init() {
             try {
@@ -1397,18 +1517,21 @@
                         } else {
                             showAdminReplyToast(quickText);
                         }
-                        speakText(quickText);
+                        // TTS with delay for iOS
+                        setTimeout(() => speakText(quickText), 100);
                         return;
                     }
                     if (message.text.startsWith('ADMIN_MESSAGE:')) {
                         const adminMessage = message.text.replace('ADMIN_MESSAGE:', '').trim();
                         showResidentMessage(adminMessage, 'Resident Message');
                         if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
-                            speakText(adminMessage);
+                            // TTS with delay for iOS
+                            setTimeout(() => speakText(adminMessage), 100);
                             return;
                         }
                         showAdminReplyToast(adminMessage);
-                        speakText(adminMessage);
+                        // TTS with delay for iOS
+                        setTimeout(() => speakText(adminMessage), 100);
                         return;
                     }
                     try {
@@ -1427,9 +1550,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  ADMIN QUICK REPLY TOAST
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         function showAdminReplyToast(text) {
             const old = document.getElementById('adminToast');
@@ -1442,57 +1565,9 @@
             setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
         }
 
-        // ═══════════════════════════════════════════════
-        //  TEXT TO SPEECH
-        // ═══════════════════════════════════════════════
-
-        let speechUtterance = null;
-
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                // Cancel any ongoing speech
-                window.speechSynthesis.cancel();
-
-                // Clean text for better speech (remove emojis or specific patterns if any)
-                const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '');
-
-                speechUtterance = new SpeechSynthesisUtterance(cleanText);
-                speechUtterance.rate = 0.9;
-                speechUtterance.pitch = 1.0;
-                speechUtterance.volume = 1.0;
-
-                const stopBtn = document.getElementById('stopSpeechBtn');
-
-                speechUtterance.onstart = () => {
-                    if (stopBtn) stopBtn.style.display = 'inline-flex';
-                };
-
-                speechUtterance.onend = () => {
-                    if (stopBtn) stopBtn.style.display = 'none';
-                    speechUtterance = null;
-                };
-
-                speechUtterance.onerror = () => {
-                    if (stopBtn) stopBtn.style.display = 'none';
-                    speechUtterance = null;
-                };
-
-                window.speechSynthesis.speak(speechUtterance);
-            }
-        }
-
-        function stopSpeech() {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const stopBtn = document.getElementById('stopSpeechBtn');
-                if (stopBtn) stopBtn.style.display = 'none';
-                speechUtterance = null;
-            }
-        }
-
-        // ═══════════════════════════════════════════════
-        //  SNAPSHOT & HELPERS
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
+        //  HELPERS
+        // ═══════════════════════════════════════════════════════════
 
         function showResidentMessage(text, title = 'Resident Message') {
             const safeText = (text || '').trim();
@@ -1528,6 +1603,7 @@
                 window.location.reload();
             }
         }
+
         function takeSnapshot() {
             const canvas = document.getElementById('snapshot-canvas');
             const video = document.getElementById('preview-video');
@@ -1537,7 +1613,6 @@
             const ctx = canvas.getContext('2d');
             if (!ctx) return null;
 
-            // Mirror snapshot to match what visitor sees in the circular preview.
             ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.translate(canvas.width, 0);
@@ -1547,9 +1622,9 @@
             return canvas.toDataURL('image/jpeg', 0.5);
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  RING BELL
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         async function ringBell() {
             if (dndPromptPending) return;
@@ -1563,7 +1638,6 @@
             const visitorName = getVisitorName();
             const sendSignal = () => {
                 if (hasAnswered) return;
-                // Retry capture while ringing so we still attach an image if camera became ready late.
                 if (!snapshot) snapshot = takeSnapshot();
                 const payload = JSON.stringify({
                     event: 'CALL_REQUEST', image: snapshot,
@@ -1590,7 +1664,7 @@
                     await rtcClient.join(appId, channelName, null, null);
                     await rtcClient.publish([localTracks.audio]);
                     document.getElementById('local-video-small').style.display = 'none';
-                    document.getElementById('remote-video').style.background = '#0F172A'; // Dark background for audio
+                    document.getElementById('remote-video').style.background = '#0F172A';
                 } else {
                     [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
                     localTracks.video.play('local-video-small');
@@ -1600,9 +1674,9 @@
             } catch (e) { console.error('[RTC]', e); }
         }
 
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
         //  CLEANUP
-        // ═══════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════
 
         async function cleanupAgora() {
             clearInterval(signalTimer);
@@ -1686,6 +1760,7 @@
             await cleanupAgora();
             location.reload();
         }
+
         function updateStatus(txt) { document.getElementById('statusLabel').innerText = txt; }
 
         document.getElementById('ringBtn').onclick = ringBell;
