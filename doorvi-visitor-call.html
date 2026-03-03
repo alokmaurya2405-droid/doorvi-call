@@ -60,13 +60,8 @@
         }
 
         @keyframes meshShift {
-            0% {
-                filter: hue-rotate(0deg);
-            }
-
-            100% {
-                filter: hue-rotate(12deg);
-            }
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(12deg); }
         }
 
         .orb {
@@ -108,23 +103,10 @@
         }
 
         @keyframes float {
-
-            0%,
-            100% {
-                transform: translate(0, 0) scale(1);
-            }
-
-            25% {
-                transform: translate(12px, 20px) scale(1.04);
-            }
-
-            50% {
-                transform: translate(-8px, 30px) scale(0.97);
-            }
-
-            75% {
-                transform: translate(15px, -10px) scale(1.02);
-            }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(12px, 20px) scale(1.04); }
+            50% { transform: translate(-8px, 30px) scale(0.97); }
+            75% { transform: translate(15px, -10px) scale(1.02); }
         }
 
         /* ══════════════════════════════════════════
@@ -390,20 +372,6 @@
             background: rgba(255, 69, 58, 0.4);
         }
 
-        .tts-loading-dots {
-            display: inline-block;
-            width: 1.2rem;
-            height: 0.3rem;
-            background: linear-gradient(90deg, #fff 33%, rgba(255, 255, 255, 0.5) 66%, transparent 100%);
-            background-size: 0.4rem 100%;
-            animation: loading 1s ease-in-out infinite;
-        }
-
-        @keyframes loading {
-            0%, 100% { background-position: -0.4rem 0; }
-            50% { background-position: 0.4rem 0; }
-        }
-
         /* ══════════════════════════════════════════
            CAMERA PREVIEW — Animated Ring
         ══════════════════════════════════════════ */
@@ -429,9 +397,7 @@
         }
 
         @keyframes ringRotate {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
         #preview-video {
@@ -455,6 +421,35 @@
             color: rgba(255, 255, 255, 0.45);
             margin-bottom: 1.3rem;
             line-height: 1.5;
+        }
+
+        /* ══════════════════════════════════════════
+           CAMERA TOGGLE BUTTON
+        ══════════════════════════════════════════ */
+        .camera-toggle-btn {
+            display: none;
+            background: rgba(94, 92, 230, 0.2);
+            border: 1px solid rgba(94, 92, 230, 0.4);
+            border-radius: 50px;
+            padding: 0.4rem 1rem;
+            color: #7C3AED;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin-bottom: 1rem;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .camera-toggle-btn:hover {
+            background: rgba(94, 92, 230, 0.35);
+            border-color: rgba(94, 92, 230, 0.6);
+            color: #A78BFA;
+        }
+
+        .camera-toggle-btn.show {
+            display: inline-block;
         }
 
         /* ══════════════════════════════════════════
@@ -489,15 +484,8 @@
         }
 
         @keyframes btnShine {
-
-            0%,
-            100% {
-                transform: translateX(-100%);
-            }
-
-            50% {
-                transform: translateX(100%);
-            }
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
         }
 
         .ring-btn:disabled {
@@ -755,9 +743,7 @@
         }
 
         @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+            to { transform: rotate(360deg); }
         }
 
         /* Countdown */
@@ -831,6 +817,7 @@
             justify-content: center;
             gap: clamp(1rem, 3.5vw, 1.8rem);
             z-index: 30;
+            flex-wrap: wrap;
         }
 
         .icon-btn {
@@ -859,6 +846,10 @@
 
         .btn-mute.muted {
             background: #FF453A;
+        }
+
+        .btn-flip {
+            background: rgba(94, 92, 230, 0.78);
         }
 
         canvas#snapshot-canvas {
@@ -899,7 +890,6 @@
                 opacity: 0;
                 transform: translateX(-50%) translateY(10px);
             }
-
             to {
                 opacity: 1;
                 transform: translateX(-50%) translateY(0);
@@ -1147,6 +1137,11 @@
                 <video id="preview-video" autoplay playsinline muted></video>
             </div>
 
+            <!-- NEW: Camera Toggle Button -->
+            <button id="cameraToggleBtn" class="camera-toggle-btn" onclick="switchCameraDirection()">
+                📷 Switch Camera
+            </button>
+
             <h1>Visitor Access</h1>
             <p class="sub-message">Look at the camera and ring the doorbell.<br>The resident will see you instantly.</p>
 
@@ -1219,6 +1214,7 @@
         <div class="controls">
             <button class="icon-btn btn-mute" id="muteBtn" onclick="toggleMute()">🎤</button>
             <button class="icon-btn btn-end" onclick="endSession()">📞</button>
+            <button class="icon-btn btn-flip" id="flipBtn" onclick="switchCameraDirectionDuringCall()" style="display: none;">📷</button>
         </div>
     </div>
 
@@ -1262,7 +1258,7 @@
         let speechUtterance = null;
         let audioContext = null;
         let isSpeaking = false;
-        let currentSpeechType = null;  // 'admin' | 'dnd' | 'quick-reply'
+        let currentSpeechType = null;
 
         function initAudioContext() {
             if (!audioContext) {
@@ -1294,14 +1290,10 @@
             }
 
             try {
-                // ✅ 1. Initialize audio context for iOS
                 initAudioContext();
-
-                // ✅ 2. Cancel any ongoing speech
                 window.speechSynthesis.cancel();
                 isSpeaking = false;
 
-                // ✅ 3. Clean text for better speech
                 const cleanText = text
                     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
                     .trim();
@@ -1311,7 +1303,6 @@
                     return;
                 }
 
-                // ✅ 4. Show TTS indicator if requested
                 if (showIndicator) {
                     let title = '🔊 Resident Message';
                     if (type === 'dnd') {
@@ -1322,17 +1313,14 @@
                     showTTSIndicator(title, cleanText, type);
                 }
 
-                // ✅ 5. Create utterance with iOS-friendly settings
                 speechUtterance = new SpeechSynthesisUtterance(cleanText);
-                
-                speechUtterance.rate = 0.9;          // Slightly slower for clarity
+                speechUtterance.rate = 0.9;
                 speechUtterance.pitch = 1.0;
                 speechUtterance.volume = 1.0;
-                speechUtterance.lang = 'en-US';      // Explicit language for iOS
+                speechUtterance.lang = 'en-US';
                 
                 const stopBtn = document.getElementById('stopSpeechBtn');
 
-                // ✅ 6. Event handlers with logging
                 speechUtterance.onstart = () => {
                     isSpeaking = true;
                     console.log('[TTS] Speech started:', type);
@@ -1344,7 +1332,6 @@
                     console.log('[TTS] Speech ended:', type);
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
-                    // Don't auto-close indicator, let user click OK
                 };
 
                 speechUtterance.onerror = (event) => {
@@ -1354,15 +1341,6 @@
                     speechUtterance = null;
                 };
 
-                speechUtterance.onpause = () => {
-                    console.log('[TTS] Speech paused:', type);
-                };
-
-                speechUtterance.onresume = () => {
-                    console.log('[TTS] Speech resumed:', type);
-                };
-
-                // ✅ 7. Speak!
                 console.log('[TTS] Speaking:', type, '|', cleanText);
                 window.speechSynthesis.speak(speechUtterance);
 
@@ -1391,10 +1369,9 @@
         }
 
         function stopSpeech() {
-            stopTTS();  // Same function
+            stopTTS();
         }
 
-        // Force iOS to initialize audio context on user interaction
         document.addEventListener('touchstart', () => {
             initAudioContext();
         }, { once: true });
@@ -1402,6 +1379,103 @@
         document.addEventListener('click', () => {
             initAudioContext();
         }, { once: true });
+
+        // ═══════════════════════════════════════════════════════════
+        //  CAMERA DIRECTION TOGGLE
+        // ═══════════════════════════════════════════════════════════
+
+        let cameraFacing = 'user'; // 'user' = front, 'environment' = back
+        let cameraStream = null;
+
+        async function switchCameraDirection() {
+            if (!cameraStream) {
+                console.log('[Camera] No camera stream active');
+                return;
+            }
+
+            try {
+                const newDirection = cameraFacing === 'user' ? 'environment' : 'user';
+                
+                console.log(`[Camera] Switching from ${cameraFacing} to ${newDirection}`);
+                
+                // Stop current stream
+                cameraStream.getTracks().forEach(track => track.stop());
+                
+                // Get new stream with opposite direction
+                const constraints = {
+                    video: {
+                        facingMode: newDirection,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+                
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraStream = newStream;
+                cameraFacing = newDirection;
+                
+                // Update preview
+                const previewVideo = document.getElementById('preview-video');
+                if (previewVideo) {
+                    previewVideo.srcObject = newStream;
+                }
+                
+                // Update button text
+                updateCameraToggleBtn();
+                console.log(`[Camera] Switched to ${newDirection} camera`);
+            } catch (error) {
+                console.error('[Camera] Switch failed:', error);
+                alert('Camera switch failed. Your device may not support this.');
+            }
+        }
+
+        async function switchCameraDirectionDuringCall() {
+            if (!rtcClient) {
+                console.log('[Camera] RTC client not available');
+                return;
+            }
+
+            try {
+                const newDirection = cameraFacing === 'user' ? 'environment' : 'user';
+                
+                console.log(`[Camera] Switching from ${cameraFacing} to ${newDirection}`);
+                
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                }
+                
+                const constraints = {
+                    video: {
+                        facingMode: newDirection,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: true
+                };
+                
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraStream = newStream;
+                cameraFacing = newDirection;
+                
+                // Update local video track
+                const videoTrack = newStream.getVideoTracks()[0];
+                if (videoTrack && rtcClient.localVideoTrack) {
+                    await rtcClient.localVideoTrack.replaceTrack(videoTrack);
+                }
+                
+                console.log(`[Camera] Switched to ${newDirection} camera during call`);
+            } catch (error) {
+                console.error('[Camera] During-call switch failed:', error);
+            }
+        }
+
+        function updateCameraToggleBtn() {
+            const btn = document.getElementById('cameraToggleBtn');
+            if (btn) {
+                btn.innerText = cameraFacing === 'user' ? '📷 Switch to Back' : '📷 Switch to Front';
+            }
+        }
 
         // ═══════════════════════════════════════════════════════════
         //  VISITOR RECOGNITION
@@ -1601,10 +1675,32 @@
         async function init() {
             try {
                 if (!isAudioOnly) {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    document.getElementById('preview-video').srcObject = stream;
+                    // ── FIX: Force FRONT camera on ALL phones ──
+                    const constraints = {
+                        video: {
+                            facingMode: 'user',  // 'user' = front camera, 'environment' = back
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+                    
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        cameraStream = stream;
+                        document.getElementById('preview-video').srcObject = stream;
+                        console.log('[Camera] Front camera initialized successfully');
+                        updateCameraToggleBtn();
+                    } catch (e) {
+                        // Fallback: if facingMode not supported, try without it
+                        console.warn('[Camera] facingMode not supported, trying fallback:', e);
+                        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                        cameraStream = fallbackStream;
+                        document.getElementById('preview-video').srcObject = fallbackStream;
+                    }
                 } else {
                     document.querySelector('.camera-preview-container').style.display = 'none';
+                    document.querySelector('.camera-toggle-btn').style.display = 'none';
                     document.querySelector('.sub-message').innerHTML = 'Audio-only call is enabled for this resident.<br>Tap Ring Doorbell to connect.';
                 }
 
@@ -1652,7 +1748,6 @@
                         } else {
                             showAdminReplyToast(quickText);
                         }
-                        // ✅ Enhanced TTS with delay and type tracking
                         setTimeout(() => speakText(quickText, 'quick-reply', true), 100);
                         return;
                     }
@@ -1660,19 +1755,16 @@
                         const adminMessage = message.text.replace('ADMIN_MESSAGE:', '').trim();
                         showResidentMessage(adminMessage, 'Resident Message');
                         if (document.getElementById('preCall') && !document.getElementById('preCall').classList.contains('hidden')) {
-                            // ✅ Enhanced TTS with delay and type tracking
                             setTimeout(() => speakText(adminMessage, 'admin', true), 100);
                             return;
                         }
                         showAdminReplyToast(adminMessage);
-                        // ✅ Enhanced TTS with delay and type tracking
                         setTimeout(() => speakText(adminMessage, 'admin', true), 100);
                         return;
                     }
                     if (message.text.startsWith('DND_AUTO_REPLY:')) {
                         const dndMessage = message.text.replace('DND_AUTO_REPLY:', '').trim();
                         showResidentMessage(dndMessage, 'Resident is in DND Mode');
-                        // ✅ Enhanced TTS for DND with type tracking
                         setTimeout(() => speakText(dndMessage, 'dnd', true), 100);
                         return;
                     }
@@ -1801,31 +1893,22 @@
                     if (mediaType === 'audio') user.audioTrack.play();
                 });
 
-                if (!isAudioOnly) {
-    // ── FIX: Force FRONT camera on ALL phones ──
-    const constraints = {
-        video: {
-            facingMode: 'user',  // 'user' = front, 'environment' = back
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-        },
-        audio: false
-    };
-    
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        document.getElementById('preview-video').srcObject = stream;
-        console.log('[Camera] Front camera initialized successfully');
-    } catch (e) {
-        // Fallback for older browsers
-        console.warn('[Camera] facingMode not supported, trying fallback:', e);
-        const fallbackStream = await navigator.mediaDevices.getUserMedia({ 
-            video: true, 
-            audio: false 
-        });
-        document.getElementById('preview-video').srcObject = fallbackStream;
-    }
-}
+                if (isAudioOnly) {
+                    localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
+                    await rtcClient.join(appId, channelName, null, null);
+                    await rtcClient.publish([localTracks.audio]);
+                    document.getElementById('local-video-small').style.display = 'none';
+                    document.getElementById('remote-video').style.background = '#0F172A';
+                    document.getElementById('flipBtn').style.display = 'none';
+                } else {
+                    [localTracks.audio, localTracks.video] = await AgoraRTC.createMicrophoneAndCameraTracks();
+                    localTracks.video.play('local-video-small');
+                    await rtcClient.join(appId, channelName, null, null);
+                    await rtcClient.publish([localTracks.audio, localTracks.video]);
+                    document.getElementById('flipBtn').style.display = 'flex';
+                }
+            } catch (e) { console.error('[RTC]', e); }
+        }
 
         // ═══════════════════════════════════════════════════════════
         //  CLEANUP
