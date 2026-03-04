@@ -60,8 +60,13 @@
         }
 
         @keyframes meshShift {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(12deg); }
+            0% {
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                filter: hue-rotate(12deg);
+            }
         }
 
         .orb {
@@ -103,10 +108,23 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            25% { transform: translate(12px, 20px) scale(1.04); }
-            50% { transform: translate(-8px, 30px) scale(0.97); }
-            75% { transform: translate(15px, -10px) scale(1.02); }
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(12px, 20px) scale(1.04);
+            }
+
+            50% {
+                transform: translate(-8px, 30px) scale(0.97);
+            }
+
+            75% {
+                transform: translate(15px, -10px) scale(1.02);
+            }
         }
 
         /* ══════════════════════════════════════════
@@ -150,6 +168,7 @@
             letter-spacing: -0.3px;
             background: linear-gradient(135deg, #FFF 30%, rgba(187, 225, 250, 0.7));
             -webkit-background-clip: text;
+            background-clip: text;
             color: transparent;
         }
 
@@ -397,7 +416,9 @@
         }
 
         @keyframes ringRotate {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         #preview-video {
@@ -452,6 +473,27 @@
             display: inline-block;
         }
 
+        .camera-retry-btn {
+            display: none;
+            background: rgba(255, 69, 58, 0.15);
+            border: 1px solid rgba(255, 69, 58, 0.3);
+            border-radius: 50px;
+            padding: 0.6rem 1.4rem;
+            color: #FF453A;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            margin-top: 1rem;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .camera-retry-btn:hover {
+            background: rgba(255, 69, 58, 0.25);
+            transform: translateY(-1px);
+        }
+
         /* ══════════════════════════════════════════
            RING BUTTON — with Glow Pulse
         ══════════════════════════════════════════ */
@@ -484,8 +526,15 @@
         }
 
         @keyframes btnShine {
-            0%, 100% { transform: translateX(-100%); }
-            50% { transform: translateX(100%); }
+
+            0%,
+            100% {
+                transform: translateX(-100%);
+            }
+
+            50% {
+                transform: translateX(100%);
+            }
         }
 
         .ring-btn:disabled {
@@ -743,7 +792,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Countdown */
@@ -890,6 +941,7 @@
                 opacity: 0;
                 transform: translateX(-50%) translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateX(-50%) translateY(0);
@@ -1142,6 +1194,11 @@
                 📷 Switch Camera
             </button>
 
+            <!-- FIX: Camera Retry Button -->
+            <button id="cameraRetryBtn" class="camera-retry-btn" onclick="location.reload()">
+                🔄 Retry Camera Access
+            </button>
+
             <h1>Visitor Access</h1>
             <p class="sub-message">Look at the camera and ring the doorbell.<br>The resident will see you instantly.</p>
 
@@ -1214,7 +1271,8 @@
         <div class="controls">
             <button class="icon-btn btn-mute" id="muteBtn" onclick="toggleMute()">🎤</button>
             <button class="icon-btn btn-end" onclick="endSession()">📞</button>
-            <button class="icon-btn btn-flip" id="flipBtn" onclick="switchCameraDirectionDuringCall()" style="display: none;">📷</button>
+            <button class="icon-btn btn-flip" id="flipBtn" onclick="switchCameraDirectionDuringCall()"
+                style="display: none;">📷</button>
         </div>
     </div>
 
@@ -1258,7 +1316,7 @@
         let speechUtterance = null;
         let audioContext = null;
         let isSpeaking = false;
-        let currentSpeechType = null;
+        let ttsQueue = [];
 
         function initAudioContext() {
             if (!audioContext) {
@@ -1271,7 +1329,6 @@
         }
 
         function showTTSIndicator(title, message, type = 'admin') {
-            currentSpeechType = type;
             const indicator = document.getElementById('ttsStatusIndicator');
             document.getElementById('ttsStatusTitle').innerText = title;
             document.getElementById('ttsStatusMessage').innerText = message;
@@ -1283,33 +1340,28 @@
             indicator.classList.remove('show');
         }
 
-        function speakText(text, type = 'admin', showIndicator = true) {
-            if (!text || !text.trim()) {
-                console.log('[TTS] Empty text, skipping');
-                return;
-            }
+        function processTTSQueue() {
+            if (isSpeaking || ttsQueue.length === 0) return;
+
+            const item = ttsQueue.shift();
+            const { text, type, showIndicator } = item;
 
             try {
                 initAudioContext();
-                window.speechSynthesis.cancel();
-                isSpeaking = false;
 
                 const cleanText = text
                     .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '')
                     .trim();
 
                 if (!cleanText) {
-                    console.log('[TTS] Text is empty after cleaning');
+                    processTTSQueue();
                     return;
                 }
 
                 if (showIndicator) {
                     let title = '🔊 Resident Message';
-                    if (type === 'dnd') {
-                        title = '🔇 DND Auto-Reply';
-                    } else if (type === 'quick-reply') {
-                        title = '💬 Quick Message';
-                    }
+                    if (type === 'dnd') title = '🔇 DND Auto-Reply';
+                    else if (type === 'quick-reply') title = '💬 Quick Message';
                     showTTSIndicator(title, cleanText, type);
                 }
 
@@ -1318,45 +1370,53 @@
                 speechUtterance.pitch = 1.0;
                 speechUtterance.volume = 1.0;
                 speechUtterance.lang = 'en-US';
-                
+
                 const stopBtn = document.getElementById('stopSpeechBtn');
 
                 speechUtterance.onstart = () => {
                     isSpeaking = true;
-                    console.log('[TTS] Speech started:', type);
                     if (stopBtn) stopBtn.style.display = 'inline-flex';
                 };
 
                 speechUtterance.onend = () => {
                     isSpeaking = false;
-                    console.log('[TTS] Speech ended:', type);
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
+                    // Auto-close indicator if no more items in queue
+                    if (ttsQueue.length === 0) {
+                        setTimeout(() => { if (!isSpeaking) closeTTSIndicator(); }, 2000);
+                    }
+                    processTTSQueue();
                 };
 
                 speechUtterance.onerror = (event) => {
-                    isSpeaking = false;
                     console.error('[TTS] Error:', event.error);
+                    isSpeaking = false;
                     if (stopBtn) stopBtn.style.display = 'none';
                     speechUtterance = null;
+                    processTTSQueue();
                 };
 
-                console.log('[TTS] Speaking:', type, '|', cleanText);
                 window.speechSynthesis.speak(speechUtterance);
 
             } catch (error) {
                 console.error('[TTS] Error:', error);
                 isSpeaking = false;
-                const stopBtn = document.getElementById('stopSpeechBtn');
-                if (stopBtn) stopBtn.style.display = 'none';
+                processTTSQueue();
             }
+        }
+
+        function speakText(text, type = 'admin', showIndicator = true) {
+            if (!text || !text.trim()) return;
+            ttsQueue.push({ text, type, showIndicator });
+            processTTSQueue();
         }
 
         function stopTTS() {
             try {
-                console.log('[TTS] Stop requested');
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
+                    ttsQueue = []; // Clear the queue
                     isSpeaking = false;
                     const stopBtn = document.getElementById('stopSpeechBtn');
                     if (stopBtn) stopBtn.style.display = 'none';
@@ -1395,12 +1455,12 @@
 
             try {
                 const newDirection = cameraFacing === 'user' ? 'environment' : 'user';
-                
+
                 console.log(`[Camera] Switching from ${cameraFacing} to ${newDirection}`);
-                
+
                 // Stop current stream
                 cameraStream.getTracks().forEach(track => track.stop());
-                
+
                 // Get new stream with opposite direction
                 const constraints = {
                     video: {
@@ -1410,17 +1470,17 @@
                     },
                     audio: false
                 };
-                
+
                 const newStream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraStream = newStream;
                 cameraFacing = newDirection;
-                
+
                 // Update preview
                 const previewVideo = document.getElementById('preview-video');
                 if (previewVideo) {
                     previewVideo.srcObject = newStream;
                 }
-                
+
                 // Update button text
                 updateCameraToggleBtn();
                 console.log(`[Camera] Switched to ${newDirection} camera`);
@@ -1438,13 +1498,13 @@
 
             try {
                 const newDirection = cameraFacing === 'user' ? 'environment' : 'user';
-                
+
                 console.log(`[Camera] Switching from ${cameraFacing} to ${newDirection}`);
-                
+
                 if (cameraStream) {
                     cameraStream.getTracks().forEach(track => track.stop());
                 }
-                
+
                 const constraints = {
                     video: {
                         facingMode: newDirection,
@@ -1453,17 +1513,17 @@
                     },
                     audio: true
                 };
-                
+
                 const newStream = await navigator.mediaDevices.getUserMedia(constraints);
                 cameraStream = newStream;
                 cameraFacing = newDirection;
-                
+
                 // Update local video track
                 const videoTrack = newStream.getVideoTracks()[0];
                 if (videoTrack && rtcClient.localVideoTrack) {
                     await rtcClient.localVideoTrack.replaceTrack(videoTrack);
                 }
-                
+
                 console.log(`[Camera] Switched to ${newDirection} camera during call`);
             } catch (error) {
                 console.error('[Camera] During-call switch failed:', error);
@@ -1684,7 +1744,7 @@
                         },
                         audio: false
                     };
-                    
+
                     try {
                         const stream = await navigator.mediaDevices.getUserMedia(constraints);
                         cameraStream = stream;
@@ -1692,11 +1752,18 @@
                         console.log('[Camera] Front camera initialized successfully');
                         updateCameraToggleBtn();
                     } catch (e) {
-                        // Fallback: if facingMode not supported, try without it
                         console.warn('[Camera] facingMode not supported, trying fallback:', e);
-                        const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                        cameraStream = fallbackStream;
-                        document.getElementById('preview-video').srcObject = fallbackStream;
+                        try {
+                            const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                            cameraStream = fallbackStream;
+                            document.getElementById('preview-video').srcObject = fallbackStream;
+                        } catch (fallbackError) {
+                            console.error('[Camera] All camera access attempts failed:', fallbackError);
+                            document.getElementById('statusLabel').innerText = '❌ Camera Access Denied';
+                            document.getElementById('cameraRetryBtn').style.display = 'inline-block';
+                            document.querySelector('.camera-preview-container').style.border = '2px dashed #FF453A';
+                            throw fallbackError; // Re-throw to stop init
+                        }
                     }
                 } else {
                     document.querySelector('.camera-preview-container').style.display = 'none';
@@ -1862,7 +1929,8 @@
 
         async function ringBell() {
             if (dndPromptPending) return;
-            let snapshot = takeSnapshot();
+
+            // UI transition
             document.getElementById('preCall').classList.add('hidden');
             document.getElementById('messagePanel').classList.add('hidden');
             document.getElementById('videoLayout').style.display = 'block';
@@ -1870,20 +1938,49 @@
             startAutoHangupCountdown();
 
             const visitorName = getVisitorName();
-            const sendSignal = () => {
-                if (hasAnswered) return;
-                if (!snapshot) snapshot = takeSnapshot();
+            let signalCount = 0;
+
+            const sendSignal = (snapshot) => {
+                if (hasAnswered || sessionEnded) return;
+
                 const payload = JSON.stringify({
-                    event: 'CALL_REQUEST', image: snapshot,
-                    visitor_id: visitorId, visitor_name: visitorName || null,
+                    event: 'CALL_REQUEST',
+                    image: snapshot || null,
+                    visitor_id: visitorId,
+                    visitor_name: visitorName || null,
                     call_type: callType
                 });
+
                 rtmClient.sendMessageToPeer({ text: payload }, targetId)
-                    .then(() => console.log('[RTM] Signal sent'))
-                    .catch(e => console.error(e));
+                    .then(() => {
+                        signalCount++;
+                        console.log(`[RTM] Signal #${signalCount} sent`);
+
+                        // Signaling Spam Prevention: 
+                        // Increase interval after 3 signals to avoid overwhelming the admin app
+                        if (signalCount === 3) {
+                            clearInterval(signalTimer);
+                            signalTimer = setInterval(() => {
+                                if (!hasAnswered) {
+                                    const latestSnapshot = takeSnapshot();
+                                    sendSignal(latestSnapshot);
+                                }
+                            }, 10000); // Slower interval after initial burst
+                        }
+                    })
+                    .catch(e => console.error('[RTM] Signal error:', e));
             };
-            sendSignal();
-            signalTimer = setInterval(sendSignal, 4000);
+
+            // Snapshot Quality Improvement: 
+            // Delay the first snapshot and signal by 700ms to let the camera sensor stabilize
+            setTimeout(() => {
+                const initialSnapshot = takeSnapshot();
+                sendSignal(initialSnapshot);
+                signalTimer = setInterval(() => {
+                    const retrySnapshot = takeSnapshot();
+                    sendSignal(retrySnapshot);
+                }, 4000);
+            }, 700);
 
             try {
                 rtcClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
@@ -1920,6 +2017,12 @@
                 if (localTracks.video) { localTracks.video.close(); localTracks.video = null; }
                 if (localTracks.audio) { localTracks.audio.close(); localTracks.audio = null; }
                 if (rtcClient) { await rtcClient.leave(); rtcClient = null; }
+
+                // Fix: Properly logout of RTM to clear CCU and status
+                if (rtmClient) {
+                    await rtmClient.logout();
+                    console.log('[RTM] Logged out');
+                }
             } catch (e) { console.log('[Cleanup]', e); }
         }
 
